@@ -1,0 +1,9 @@
+opencv-python
+pycocotools
+keras-cv
+pandas
+psycopg2-binary
+sqlalchemy
+selenium
+webdriver-manager
+seaborn

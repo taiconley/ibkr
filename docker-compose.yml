@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=ibkr
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    # env_file:
+    #   - .env
+    ports:
+      - '5434:5432'
+    container_name: ibkr_db
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  web:
+    build: ./app
+    ports: 
+      - '8000:8000'
+    container_name: ibkr_web
+    volumes:
+      - /home/taiconley/Desktop/Projects/ibkr:/web
+
+  jupyter:
+    build: ./jupyter
+    volumes:
+      - /home/taiconley/Desktop/Projects/ibkr:/jupyter
+    ports:
+      - '8888:8888'
+    container_name: ibkr_jupyter
+    depends_on:
+      - db
+
+
+volumes:
+  db:
+  web:
+  jupyter:
