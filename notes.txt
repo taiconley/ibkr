@@ -1,0 +1,34 @@
+1) Run sudo docker context use default
+2) run docker compose without jupyter
+3) get the network with docker network ls
+            It appears the current network is called ibkr_default
+4) build the image: sudo docker build -t my-jupyter-gpu-ibkr . --no-cache
+5) seperately run the sudo nvidia-docker run --gpus all --privileged --network=ibkr_default -p 8888:8888 -v /home/taiconley/Desktop/Projects/ibkr:/ibkr --name=my-jupyter-gpu-ibkr-container my-jupyter-gpu-ibkr             
+remove the container: sudo docker rm my-jupyter-gpu-ibkr-container
+
+
+
+
+
+docker ps: This command lists all the running containers. Add the -a option to see all containers, not just the running ones.
+
+docker stats: This command displays a live stream of container performance metrics including CPU usage, memory usage, network I/O, disk I/O, etc.
+
+docker logs <container_id>: This command shows the logs for a specific container. Replace <container_id> with your container's ID. You can also use the --follow option to continuously stream new log entries.
+
+docker top <container_id>: This command shows the running processes in a specific container.
+
+docker inspect <container_id>: This command shows all the details about a container's configuration and state.
+
+docker images: This command lists all the Docker images on your host.
+
+If you prefer a GUI, there are some open-source projects that you can consider:
+
+Portainer (https://www.portainer.io/): Portainer makes it easier to manage your Docker containers, it allows you to manage containers, images, networks, and volumes from the web-based Portainer dashboard.
+
+Cockpit (https://cockpit-project.org/): Cockpit is a server manager that makes it easy to administer your GNU/Linux servers via a web browser. It also has a Docker module.
+
+Kitematic (https://kitematic.com/): Kitematic is a simple application for managing Docker containers on Mac, Linux and Windows.
+
+Note: When using any third-party tool, always consider the security implications and make sure that the tool is from a reliable source.
+

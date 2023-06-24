@@ -1,41 +1,41 @@
 version: '3.8'
 
 services:
-  db:
+  ibkr_db:
     image: postgres:14.1-alpine
     restart: always
     environment:
       - POSTGRES_DB=ibkr
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    # env_file:
-    #   - .env
     ports:
       - '5434:5432'
     container_name: ibkr_db
     volumes:
-      - db:/var/lib/postgresql/data
+      - ibkr_db:/var/lib/postgresql/data
 
-  web:
+  ibkr_web:
     build: ./app
     ports: 
       - '8000:8000'
     container_name: ibkr_web
     volumes:
-      - /home/taiconley/Desktop/Projects/ibkr:/web
+      - /home/taiconley/Desktop/Projects/ibkr:/ibkr
 
-  jupyter:
+  ibkr_jupyter:
     build: ./jupyter
     volumes:
-      - /home/taiconley/Desktop/Projects/ibkr:/jupyter
+      - /home/taiconley/Desktop/Projects/ibkr:/ibkr
     ports:
       - '8888:8888'
     container_name: ibkr_jupyter
     depends_on:
-      - db
-
+      - ibkr_db
+    privileged: true
+    runtime: nvidia
+    restart: "no"
 
 volumes:
-  db:
-  web:
-  jupyter:
+  ibkr_db:
+  ibkr_web:
+  # jupyter:

@@ -7,16 +7,20 @@ import json
 
 class DB:
 
-    def __init__(self, userName, userPass, dataBaseName, host):
+    def __init__(self, userName, userPass, dataBaseName, host, docker=False):
         self.userName = userName
         self.userPass = userPass
         self.dataBaseName = dataBaseName
         self.host = host
-        # self.dbEngineText = 'postgresql+psycopg2://'+self.userName + \
-        #     ':'+self.userPass+'db:5432/'+self.dataBaseName
+        self.docker = docker
+        if self.docker:
+            self.dbEngineText = 'postgresql+psycopg2://'+self.userName+':'+self.userPass+'@'+self.host+':5432/'+self.dataBaseName
+        else:
+            self.dbEngineText = 'postgresql+psycopg2://'+self.userName+':'+self.userPass+'@'+self.host+':5434/'+self.dataBaseName
+        
 
-        self.dbEngineText = 'postgresql+psycopg2://'+self.userName + \
-            ':'+self.userPass+'@'+self.host+':5434/'+self.dataBaseName
+        def get_connection(self):
+            return create_engine(self.dbEngineText)
 
         def lstTables(self):
             query_listTables = '''
@@ -30,11 +34,14 @@ class DB:
             tables = [table[0] for table in tables]
             conn.close()
             return tables
-
         self.tables = lstTables(self)
+            
 
     def connect(self):
-        conn = psycopg2.connect(dbname=self.dataBaseName, user=self.userName, password=self.userPass, host=self.host, port=5434)
+        if self.docker:
+            conn = psycopg2.connect(dbname=self.dataBaseName, user=self.userName, password=self.userPass, host="ibkr_db", port="5432")
+        else: 
+            conn = psycopg2.connect(dbname=self.dataBaseName, user=self.userName, password=self.userPass, host=self.host, port="5434")
         return conn
 
     def buildTable(self, tableName, fieldList):
@@ -104,6 +111,15 @@ class DB:
         df = pd.read_sql_query(query, con=conn)
         return df
 
+    def DBtoList(self, query):
+        '''runs query and returns a list'''
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        conn.close()
+        list_result = [list(row) for row in rows]
+        return list_result
     
 if __name__ == '__main__':
     pass

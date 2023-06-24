@@ -1,113 +1,230 @@
-from ibapi.client import EClient
-from ibapi.wrapper import EWrapper
-from ibapi.contract import Contract
-import threading
-import time
 import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dropout, Dense
+from tensorflow.keras.models import load_model
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import load_model
+from joblib import dump, load
 
-class App(EWrapper, EClient):
-    def __init__(self):
-        EClient.__init__(self, self)
-        self.data = []
 
-    def error(self, reqId, errorCode, errorString):
-        print("Error: ", reqId, " ", errorCode, " ", errorString)
 
-    def historicalData(self, reqId, bar):
-        print("HistoricalData. ", reqId, " Date:", bar.date, "Open:", bar.open,
-              "High:", bar.high, "Low:", bar.low, "Close:", bar.close, "Volume:", bar.volume,
-              "Count:", bar.barCount, "WAP:", bar.average)
+def generate_sql(input_sql_file):
+    with open(input_sql_file, 'r') as file:
+        sql = file.read()
+        return sql
 
-    def historicalDataEnd(self, reqId: int, start: str, end: str):
-        print("HistoricalDataEnd ", reqId, " ", start, " ", end)
-        self.disconnect()
+def generate_df_from_sql_file(input_sql_file, db):
+    sql = (generate_sql(input_sql_file))
+    df = db.DBtoDF(sql)
+    return df
 
-    def realTimeBar(self, reqId, time, open, high, low, close, volume, wap, count):
-        print("RealTimeBar. ", reqId, " Time:", time, "Open:", open,
-              "High:", high, "Low:", low, "Close:", close, "Volume:", volume,
-              "Count:", count, "WAP:", wap)
+def generate_list_from_sql_file(input_sql_file, db):
+    sql = (generate_sql(input_sql_file))
+    lst = db.DBtoList(sql)
+    return lst
+
+
+class DataProcessor:
+    def __init__(self, df):
+        self.df = df
+        self.processed_df = None
+        self.scaled_df = None
+        self.scaler = MinMaxScaler(feature_range=(0, 1))  # for entire dataset
+        self.close_scaler = MinMaxScaler(feature_range=(0, 1))  # for 'Close' column only
+
+
+    def process_df(self):
+        # Set 'timestamp' as the index
+        self.df = self.df.set_index('timestamp')
+        
+        # Pivot the table and also include 'volume' where ticktype is 5
+        df_pivot = self.df.pivot_table(index=self.df.index, columns='ticktype', values=['price', 'volume'])
+        df_pivot.columns = ['_'.join(map(str,i)) for i in df_pivot.columns]
+        
+        # Resample the data per second and fill forward any NaN values
+        df_resampled = df_pivot.resample('1S').agg({'price_1': 'last', 'price_2': 'last', 'price_4': 'last', 'volume_5': 'sum'}).ffill()
+        
+        # Reshape
+        df_resampled['Open'] = df_resampled['price_1']
+        df_resampled['High'] = df_resampled[['price_1', 'price_2', 'price_4']].max(axis=1)
+        df_resampled['Low'] = df_resampled[['price_1', 'price_2', 'price_4']].min(axis=1)
+        df_resampled['Close'] = df_resampled['price_4']
+        df_resampled['Volume'] = df_resampled['volume_5']
+        self.processed_df = df_resampled[['Open', 'High', 'Low', 'Close', 'Volume']]
+
+    def create_train_test_split(self, X, y, train_ratio=0.8):
+        train_size = int(len(X) * train_ratio)
+        test_size = len(X) - train_size
+
+        X_train, X_test = X.iloc[0:train_size], X.iloc[train_size:len(X)]
+        y_train, y_test = y.iloc[0:train_size], y.iloc[train_size:len(y)]
+
+        return X_train, X_test, y_train, y_test
+
+
+    # def scale_shift_data(self, look_ahead):
+    #     # Normalize the dataset
+    #     scaled = self.scaler.fit_transform(self.processed_df)
+    #     self.close_scaler.fit(self.processed_df[['Close']])  # fit the close_scaler
+
+    #     # Save the scalers
+    #     dump(self.scaler, 'scaler.joblib')
+    #     dump(self.close_scaler, 'close_scaler.joblib')
+
+    #     # Convert scaled array into dataframe
+    #     self.scaled_df = pd.DataFrame(scaled, index=self.processed_df.index, columns=self.processed_df.columns)
+
+
+    #     # Shift the dataframe to create the labels
+    #     self.shifted_df = self.scaled_df.shift(-look_ahead)
+
+    #     # Drop the last 'look_ahead' rows
+    #     self.scaled_df = self.scaled_df.iloc[:-look_ahead]
+    #     self.shifted_df = self.shifted_df.iloc[:-look_ahead]
+    #     return self.scaler, self.close_scaler  # return both scalers
+
+    def scale_shift_data(self, look_ahead, for_training=True):
+        # Normalize the dataset
+        scaled = self.scaler.fit_transform(self.processed_df)
+        self.close_scaler.fit(self.processed_df[['Close']])  # fit the close_scaler
+
+        # Save the scalers
+        dump(self.scaler, 'scaler.joblib')
+        dump(self.close_scaler, 'close_scaler.joblib')
+
+        # Convert scaled array into dataframe
+        self.scaled_df = pd.DataFrame(scaled, index=self.processed_df.index, columns=self.processed_df.columns)
+
+        if for_training:
+            # Shift the dataframe to create the labels
+            self.shifted_df = self.scaled_df.shift(-look_ahead)
+
+            # Drop the last 'look_ahead' rows
+            self.scaled_df = self.scaled_df.iloc[:-look_ahead]
+            self.shifted_df = self.shifted_df.iloc[:-look_ahead]
+
+        return self.scaler, self.close_scaler  # return both scalers
+
+
+    # def create_dataset(self, X, y, time_steps):
+    #     Xs, ys = [], []
+    #     for i in range(len(X) - time_steps):
+    #         Xs.append(X.iloc[i:(i + time_steps)].values)
+    #         ys.append(y.iloc[i + time_steps])
+    #     return np.array(Xs), np.array(ys)
     
-    def tickPrice(self, reqId, tickType, price, attrib):
-        print("Tick Price. Ticker Id:", reqId, "tickType:", tickType, "Price:", price)
+    
+    def create_dataset(self, X, time_steps, for_training=True, y=None, look_ahead=None):
+        Xs, ys = [], []
+        if for_training:
+            if y is None or look_ahead is None:
+                raise ValueError("y and look_ahead must not be None in training mode")
+            for i in range(len(X) - time_steps - look_ahead):
+                v = X.iloc[i:(i + time_steps)].values
+                Xs.append(v)        
+                ys.append(y.iloc[i + time_steps + look_ahead])
+            return np.array(Xs), np.array(ys) # Return X and y in training context
+        else:
+            for i in range(len(X) - time_steps):
+                v = X.iloc[i:(i + time_steps)].values
+                Xs.append(v)
+            return np.array(Xs)  # Return only X in prediction context
 
-    # def tickPrice(self, reqId, tickType, price, attrib):
-    #     # Capture the latest prices for BID, ASK, and LAST
-    # this is used for testing making a window function
-    #     if tickType in [1, 2, 4]:  # BID, ASK, and LAST
-    #         timestamp = pd.Timestamp.now(tz='UTC')
-    #         self.data.append((reqId, tickType, price, timestamp))
+class ModelBuilder:
+    def __init__(self, n_features, time_steps):
+        self.n_features = n_features
+        self.time_steps = time_steps
+        self.model = self.build_model()
 
-    def format_realTimeData(app):
-        # Assume that the last price is the close, the highest price is the high, etc.
-        # (In practice, you may want to track these values over time instead)
-        close = max([price for reqId, tickType, price in app.data if tickType == 4], default=0)
-        high = max([price for reqId, tickType, price in app.data if tickType == 2], default=0)
-        low = min([price for reqId, tickType, price in app.data if tickType == 1], default=0)
-        volume = 0  # Not available from tick data
-        count = 0  # Not available from tick data
-        wap = 0  # Not available from tick data
+    def build_model(self):
+        model = Sequential()
+        model.add(LSTM(units=50, return_sequences=True, input_shape=(self.time_steps, self.n_features)))
+        model.add(Dropout(0.2))
+        model.add(LSTM(units=50, return_sequences=False))
+        model.add(Dropout(0.2))
+        model.add(Dense(units=1))
+        model.compile(optimizer='adam', loss='mean_squared_error',  run_eagerly=True)
+        return model
 
-        print("RealTimeData. 1", "Date:", time.strftime("%Y%m%d %H:%M:%S"), 
-            "Open:", close, "High:", high, "Low:", low, "Close:", close, 
-            "Volume:", volume, "Count:", count, "WAP:", wap)
+    def train_model(self, X_train, y_train, X_test, y_test, epochs=20, batch_size=64):
+        history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, 
+                                 validation_data=(X_test, y_test), shuffle=False)
+        return self.model, history
 
+    def save_model(self, model_path):
+        self.model.save(model_path)
 
+    def load_model(self, model_path):
+        self.model = load_model(model_path)
 
+    def plot_loss(self, history):
+        plt.plot(history.history['loss'], label='train')
+        plt.plot(history.history['val_loss'], label='test')
+        plt.legend()
+        plt.show()
 
-def app_connect():
-    app = App()
-    app.connect("127.0.0.1", 7496, 11)
-    contract = Contract()
-    contract.symbol = "ES"
-    contract.secType = "FUT"
-    contract.exchange = "CME"
-    contract.currency = "USD"
-    contract.lastTradeDateOrContractMonth = "202306" # Please check the contract month
+# class Predictor:
+#     def __init__(self, model, preprocessor):
+#         self.model = model
+#         self.preprocessor = preprocessor
 
-    # Start the socket in a thread
-    api_thread = threading.Thread(target=app.run, daemon=True)
-    api_thread.start()
-    return app, api_thread, contract
+#     def prepare_data(self, look_ahead, time_steps, for_training):
+#         # Load the scalers
+#         self.preprocessor.scaler = load('scaler.joblib')
+#         self.preprocessor.close_scaler = load('close_scaler.joblib')
 
-def get_historicalData(app, contract):
-    # Request historical bars
-    app.reqHistoricalData(1, contract, "", "600 S", "1 min", "TRADES", 0, 2, False, [])
-    #Wait for disconnection
-    while app.isConnected():
-        time.sleep(1)
+#         self.preprocessor.scale_shift_data(look_ahead)
+#         X, y = self.preprocessor.scaled_df, self.preprocessor.shifted_df['Close']
+#         X, y = self.preprocessor.create_dataset(X, y, time_steps, look_ahead, for_training)
+#         return X, y
 
-def get_realTimeData(app, contract):
-    # Request Market Data
-    app.reqMktData(1, contract, "", False, False, [])
-    # Let it run for a minute
-    time.sleep(60) 
-    # Disconnect
-    app.disconnect()
+#     def predict(self, look_ahead, time_steps):
+#         X, y = self.prepare_data(look_ahead, time_steps, for_training=False)
+#         predictions = self.model.predict(X)
+#         return predictions
 
-def build_format_realTimeData(app):
-    # Create a DataFrame from the data
-    df = pd.DataFrame(app.data, columns=['reqId', 'tickType', 'value', 'timestamp'])
+#     def rescale_prediction(self, prediction):
+#         prediction = prediction.reshape(-1, 1)  # ensure it's a 2D array
+#         rescaled_prediction = self.preprocessor.close_scaler.inverse_transform(prediction)
+#         return rescaled_prediction
 
-    # Group by 'reqId', 'tickType', and 30-second windows
-    grouped_df = df.groupby(['reqId', 'tickType', pd.Grouper(key='timestamp', freq='30S')]).last().reset_index()
+class Predictor:
+    def __init__(self, model, preprocessor):
+        self.model = model
+        self.preprocessor = preprocessor
 
-    # Pivot the DataFrame so that each row corresponds to a single request ID and timestamp,
-    # and each column corresponds to a single tick type
-    pivoted_df = grouped_df.pivot(index=['reqId', 'timestamp'], columns='tickType', values='value')
+    def prepare_data(self, time_steps, for_training):
+        # Load the scalers
+        self.preprocessor.scaler = load('scaler.joblib')
+        self.preprocessor.close_scaler = load('close_scaler.joblib')
 
-    # Rename the columns for clarity
-    pivoted_df.rename(columns={1: 'bid', 2: 'ask', 4: 'last', 5: 'last_size', 6: 'wap', 8: 'volume'}, inplace=True)
+        look_ahead = 0 if not for_training else self.preprocessor.look_ahead  # set look_ahead to 0 if not training
+        self.preprocessor.scale_shift_data(look_ahead, for_training=False)
+        X = self.preprocessor.scaled_df
+        if for_training:
+            y = self.preprocessor.shifted_df['Close']
+            X = self.preprocessor.create_dataset(X, time_steps, y, look_ahead, for_training=False)
 
-    return pivoted_df
+            return X, y
+        else:
+            X = self.preprocessor.create_dataset(X, time_steps, for_training)
+            return X
 
+    def predict(self, time_steps, for_training=False):
+        X = self.prepare_data(time_steps, for_training)
+        predictions = self.model.predict(X)
+        return predictions
+
+    def rescale_prediction(self, prediction):
+        prediction = prediction.reshape(-1, 1)  # ensure it's a 2D array
+        rescaled_prediction = self.preprocessor.close_scaler.inverse_transform(prediction)
+        return rescaled_prediction
+    
 
 def main():
-    app, api_thread, contract = app_connect()
-    # get_realTimeData(app, contract)
-    # get_historicalData(app, contract)
-    get_realTimeData(app, contract)
-    # real_time_data_df = build_format_realTimeData(app)
-    # print(real_time_data_df)
+    pass
 
 if __name__ == "__main__":
     main()

@@ -6,15 +6,19 @@ userPass = passwords.userPass
 dataBaseName = passwords.dataBaseName
 host = passwords.host
 
-db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host)
+db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
+
 
 fieldList = '''(
-            FIRST_NAME CHAR(20) NOT NULL,
-            LAST_NAME CHAR(20),
-            AGE INT,
-            SEX CHAR(1),
-            INCOME FLOAT
+            tickType INT,
+            Price FLOAT,
+            Volume INT,
+            timestamp TIMESTAMP
 )
 '''
 
-db.buildTable("testTable", fieldList)
+db.buildTable("TickData_jun21", fieldList)
+
+#db.dropTable("TickData_jun14")
+
+print(db.tables)
