@@ -17,7 +17,7 @@ fieldList = '''(
 )
 '''
 
-db.buildTable("TickData_jun21", fieldList)
+#db.buildTable("TickData_jun29", fieldList)
 
 #db.dropTable("TickData_jun14")
 

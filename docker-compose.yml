@@ -35,6 +35,14 @@ services:
     runtime: nvidia
     restart: "no"
 
+  tensorboard:
+    image: tensorflow/tensorflow:latest  # ensure this matches the version of tensorflow you are using.
+    volumes:
+      - /home/taiconley/Desktop/Projects/ibkr:/ibkr  # adjust if your logs are in a different location.
+    ports:
+      - 6006:6006
+    command: tensorboard --bind_all --logdir /ibkr/jupyter/logs  # adjust if your logs are in a different location.
+
 volumes:
   ibkr_db:
   ibkr_web:

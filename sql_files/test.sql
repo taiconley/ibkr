@@ -1,2 +1,2 @@
 SELECT *
-FROM public.tickdata;
+FROM public.tickdata_jun29;

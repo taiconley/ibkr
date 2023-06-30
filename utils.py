@@ -5,7 +5,9 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dropout, Dense
 from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import load_model
+from tensorflow.keras.callbacks import TensorBoard
+import os
+from datetime import datetime
 from joblib import dump, load
 
 
@@ -31,8 +33,10 @@ class DataProcessor:
         self.df = df
         self.processed_df = None
         self.scaled_df = None
+        self.look_ahead = None  # add this line
         self.scaler = MinMaxScaler(feature_range=(0, 1))  # for entire dataset
         self.close_scaler = MinMaxScaler(feature_range=(0, 1))  # for 'Close' column only
+
 
 
     def process_df(self):
@@ -64,27 +68,6 @@ class DataProcessor:
         return X_train, X_test, y_train, y_test
 
 
-    # def scale_shift_data(self, look_ahead):
-    #     # Normalize the dataset
-    #     scaled = self.scaler.fit_transform(self.processed_df)
-    #     self.close_scaler.fit(self.processed_df[['Close']])  # fit the close_scaler
-
-    #     # Save the scalers
-    #     dump(self.scaler, 'scaler.joblib')
-    #     dump(self.close_scaler, 'close_scaler.joblib')
-
-    #     # Convert scaled array into dataframe
-    #     self.scaled_df = pd.DataFrame(scaled, index=self.processed_df.index, columns=self.processed_df.columns)
-
-
-    #     # Shift the dataframe to create the labels
-    #     self.shifted_df = self.scaled_df.shift(-look_ahead)
-
-    #     # Drop the last 'look_ahead' rows
-    #     self.scaled_df = self.scaled_df.iloc[:-look_ahead]
-    #     self.shifted_df = self.shifted_df.iloc[:-look_ahead]
-    #     return self.scaler, self.close_scaler  # return both scalers
-
     def scale_shift_data(self, look_ahead, for_training=True):
         # Normalize the dataset
         scaled = self.scaler.fit_transform(self.processed_df)
@@ -104,17 +87,9 @@ class DataProcessor:
             # Drop the last 'look_ahead' rows
             self.scaled_df = self.scaled_df.iloc[:-look_ahead]
             self.shifted_df = self.shifted_df.iloc[:-look_ahead]
+            self.look_ahead = look_ahead 
 
         return self.scaler, self.close_scaler  # return both scalers
-
-
-    # def create_dataset(self, X, y, time_steps):
-    #     Xs, ys = [], []
-    #     for i in range(len(X) - time_steps):
-    #         Xs.append(X.iloc[i:(i + time_steps)].values)
-    #         ys.append(y.iloc[i + time_steps])
-    #     return np.array(Xs), np.array(ys)
-    
     
     def create_dataset(self, X, time_steps, for_training=True, y=None, look_ahead=None):
         Xs, ys = [], []
@@ -132,6 +107,7 @@ class DataProcessor:
                 Xs.append(v)
             return np.array(Xs)  # Return only X in prediction context
 
+
 class ModelBuilder:
     def __init__(self, n_features, time_steps):
         self.n_features = n_features
@@ -148,10 +124,29 @@ class ModelBuilder:
         model.compile(optimizer='adam', loss='mean_squared_error',  run_eagerly=True)
         return model
 
+
     def train_model(self, X_train, y_train, X_test, y_test, epochs=20, batch_size=64):
-        history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, 
-                                 validation_data=(X_test, y_test), shuffle=False)
+        # Specify the log directory for TensorBoard logs
+        log_dir = os.path.join(
+            "logs",
+            "fit",
+            "ModelBuilder",
+            datetime.now().strftime("%Y%m%d-%H%M%S"),
+        )
+        # Initialize the TensorBoard callback
+        tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+        history = self.model.fit(
+            X_train, 
+            y_train, 
+            epochs=epochs, 
+            batch_size=batch_size, 
+            validation_data=(X_test, y_test), 
+            shuffle=False, 
+            callbacks=[tensorboard_callback]  # Add TensorBoard to callbacks
+        )
         return self.model, history
+
 
     def save_model(self, model_path):
         self.model.save(model_path)
@@ -165,30 +160,7 @@ class ModelBuilder:
         plt.legend()
         plt.show()
 
-# class Predictor:
-#     def __init__(self, model, preprocessor):
-#         self.model = model
-#         self.preprocessor = preprocessor
 
-#     def prepare_data(self, look_ahead, time_steps, for_training):
-#         # Load the scalers
-#         self.preprocessor.scaler = load('scaler.joblib')
-#         self.preprocessor.close_scaler = load('close_scaler.joblib')
-
-#         self.preprocessor.scale_shift_data(look_ahead)
-#         X, y = self.preprocessor.scaled_df, self.preprocessor.shifted_df['Close']
-#         X, y = self.preprocessor.create_dataset(X, y, time_steps, look_ahead, for_training)
-#         return X, y
-
-#     def predict(self, look_ahead, time_steps):
-#         X, y = self.prepare_data(look_ahead, time_steps, for_training=False)
-#         predictions = self.model.predict(X)
-#         return predictions
-
-#     def rescale_prediction(self, prediction):
-#         prediction = prediction.reshape(-1, 1)  # ensure it's a 2D array
-#         rescaled_prediction = self.preprocessor.close_scaler.inverse_transform(prediction)
-#         return rescaled_prediction
 
 class Predictor:
     def __init__(self, model, preprocessor):

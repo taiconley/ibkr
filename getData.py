@@ -59,7 +59,7 @@ class App(EWrapper, EClient):
 
 def app_connect():
     db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
-    app = App(db, tableName="tickdata_jun21")
+    app = App(db, tableName="tickdata_jun29")
     app.connect("127.0.0.1", 7496, 1)
     time.sleep(5) #use for paper trading
     contract = Contract()

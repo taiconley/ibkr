@@ -34,7 +34,7 @@ host = 'localhost'
 db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
 
 # input_sql_file='sql_files/test.sql'
-df = db.DBtoDF(f"SELECT * FROM tickdata_jun21")
+df = db.DBtoDF(f"SELECT * FROM tickdata_jun29")
 
 def main_build_model(df, look_ahead=5, TIME_STEPS=60):
     
@@ -53,8 +53,8 @@ def main_build_model(df, look_ahead=5, TIME_STEPS=60):
     X_train, X_test, y_train, y_test = processor.create_train_test_split(X, y)
     # Create final train and test datasets
     # TIME_STEPS = 60
-    X_train, y_train = processor.create_dataset(X_train, y_train, TIME_STEPS)
-    X_test, y_test = processor.create_dataset(X_test, y_test, TIME_STEPS)
+    X_train, y_train = processor.create_dataset(X_train, y=y_train, time_steps=TIME_STEPS, for_training=True, look_ahead=look_ahead)
+    X_test, y_test = processor.create_dataset(X_test, y=y_test, time_steps=TIME_STEPS, for_training=True, look_ahead=look_ahead)
     # Number of features in the data
     n_features = X_train.shape[2]
     
@@ -67,13 +67,6 @@ def main_build_model(df, look_ahead=5, TIME_STEPS=60):
     builder.save_model(model_path)
     # Plot loss
     # builder.plot_loss(history) #this needs to save vs show
-    # Create a Predictor instance
-    predictor = Predictor(model, processor)
-    # Predict
-    predictions = predictor.predict(look_ahead, TIME_STEPS)
-    # Rescale predictions
-    rescaled_predictions = predictor.rescale_prediction(predictions)
-    # return rescaled_predictions
 
 if __name__ == "__main__":
     main_build_model(df, look_ahead=5, TIME_STEPS=60)
