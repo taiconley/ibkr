@@ -231,7 +231,7 @@ class Predictor:
 
     def predict(self, time_steps, for_training=False):
         X = self.prepare_data(time_steps, for_training)
-        predictions = self.model.predict(X)
+        predictions = self.model.predict(X, run_eagerly=True)
         return predictions
 
     def rescale_prediction(self, prediction):
@@ -256,7 +256,7 @@ class LSTMHyperModel(HyperModel):
         model.add(Dropout(rate=hp.Float('dropout_3', min_value=0.0, max_value=0.5, step=0.05)))
         model.add(Dense(units=hp.Int('dense_units', min_value=16, max_value=128, step=16), activation='relu'))
         model.add(Dense(units=1))
-        model.compile(optimizer='adam', loss='mean_squared_error')
+        model.compile(optimizer='adam', loss='mean_squared_error', run_eagerly=True)
         return model
 
 def main():

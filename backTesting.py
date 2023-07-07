@@ -138,7 +138,7 @@ class Backtester:
 input_sql_file='sql_files/test.sql'
 df = generate_df_from_sql_file(input_sql_file, db)
 df['timestamp'] = df['timestamp'].dt.tz_localize('UTC') #adding this to update to utc
-df = df.head(100)
+# df = df.head(100)
 
 # Define your parameters
 n_features = 5
