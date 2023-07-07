@@ -71,7 +71,6 @@ class DataProcessor:
 
         return X_train, X_test, y_train, y_test
 
-
     def scale_shift_data(self, look_ahead, for_training=True):
         # Normalize the dataset
         scaled = self.scaler.fit_transform(self.processed_df)
@@ -208,9 +207,10 @@ class ModelBuilder:
 
 
 class Predictor:
-    def __init__(self, model, preprocessor):
+    def __init__(self, model, preprocessor, batch_size=1):
         self.model = model
         self.preprocessor = preprocessor
+        self.batch_size = batch_size
 
     def prepare_data(self, time_steps, for_training):
         # Load the scalers
@@ -229,18 +229,18 @@ class Predictor:
             X = self.preprocessor.create_dataset(X, time_steps, for_training)
             return X
 
-    # def predict(self, time_steps, for_training=False):
-    #     X = self.prepare_data(time_steps, for_training)
-    #     predictions = self.model.predict(X, run_eagerly=True)
-    #     return predictions
-
-    def predict(self, time_steps=None, for_training=False, run_eagerly=True):
+    def predict(self, time_steps, for_training=False, batch_size=1):
         X = self.prepare_data(time_steps, for_training)
-        if run_eagerly:
-            predictions = self.model.predict(X)
-        else:
-            predictions = self.model.predict(X, batch_size=self.batch_size)
+        predictions = self.model.predict(X, batch_size=batch_size)
         return predictions
+
+    # def predict(self, time_steps=None, for_training=False, run_eagerly=True):
+    #     X = self.prepare_data(time_steps, for_training)
+    #     if run_eagerly:
+    #         predictions = self.model.predict(X)
+    #     else:
+    #         predictions = self.model.predict(X, batch_size=self.batch_size)
+    #     return predictions
 
     def rescale_prediction(self, prediction):
         prediction = prediction.reshape(-1, 1)  # ensure it's a 2D array

@@ -36,7 +36,7 @@ db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=ho
 
 
 class Backtester:
-    def __init__(self, raw_data, initial_balance, preprocessor, model_builder, predictor, time_steps, look_ahead):
+    def __init__(self, raw_data, initial_balance, preprocessor, model_builder, predictor, time_steps, look_ahead, num_runs):
         self.raw_data = raw_data
         self.initial_balance = initial_balance
         self.preprocessor = preprocessor
@@ -44,6 +44,7 @@ class Backtester:
         self.predictor = predictor
         self.time_steps = time_steps
         self.look_ahead = look_ahead
+        self.num_runs = num_runs
         self.data = pd.DataFrame({
             'Actual': np.zeros(len(self.raw_data)),  # Initialize as zeros
             'Predicted': np.zeros(len(self.raw_data)),
@@ -57,19 +58,21 @@ class Backtester:
 
     def run(self):
         position = 0
+        # Preprocess the entire raw data
+        self.preprocessor.df = self.raw_data.copy()
+        self.preprocessor.process_df()
+        self.preprocessor.scale_shift_data(look_ahead=0, for_training=False)
         for i in range(self.time_steps, len(self.data)):
-            new_data = self.raw_data.iloc[i - self.time_steps : i]  # Get the data for the past 'time_steps' periods
-            self.preprocessor.df = new_data.copy()
-            self.preprocessor.process_df()
-            self.preprocessor.scale_shift_data(look_ahead=0, for_training=False)
+            # Get the preprocessed data for the past 'time_steps' periods
+            new_data = self.preprocessor.processed_df.iloc[i - self.time_steps : i]
             
             # Assume that your preprocessed data now has a 'Close' column
-            actual_price_now = self.preprocessor.processed_df['Close'].iloc[-1]  # Get the latest 'Close' price
+            actual_price_now = new_data['Close'].iloc[-1]  # Get the latest 'Close' price
             self.data.iat[i, self.data.columns.get_loc('Actual')] = actual_price_now  # Update 'Actual' price
-
+            
             X = self.preprocessor.scaled_df
             X = self.preprocessor.create_dataset(X, y=None, time_steps=self.time_steps, look_ahead=0, for_training=False)
-            predictions = self.predictor.predict(time_steps=self.time_steps, for_training=False)
+            predictions = self.predictor.predict(time_steps=self.time_steps, for_training=False, batch_size=50)
             rescaled_predictions = self.predictor.rescale_prediction(predictions)
             price = rescaled_predictions[-1][0]
             self.data.iat[i, self.data.columns.get_loc('Predicted')] = price
@@ -130,40 +133,39 @@ class Backtester:
         ax2.tick_params(axis='y', labelcolor=color)
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
         plt.title('Actual Prices and Portfolio Value Over Time')
-        plt.show()
+        plt.savefig('portfolio_values.png')  # Save figure as .png
+
+def main():
+    input_sql_file='sql_files/test.sql'
+    df = generate_df_from_sql_file(input_sql_file, db)
+    df['timestamp'] = df['timestamp'].dt.tz_localize('UTC') #adding this to update to utc
+
+    # Define your parameters
+    n_features = 5
+    time_steps = 60  # Define your time_steps
+    look_ahead = 5  # Define your look_ahead
 
 
+    # Initialize your classes
+    preprocessor = DataProcessor(df)  # Use your actual preprocessor class and its parameters
+    model_builder = ModelBuilder(n_features, time_steps)  # Use your actual model builder class and its parameters
+    predictor = Predictor(model=None, preprocessor=preprocessor)  # Use your actual predictor class and its parameters
 
 
-input_sql_file='sql_files/test.sql'
-df = generate_df_from_sql_file(input_sql_file, db)
-df['timestamp'] = df['timestamp'].dt.tz_localize('UTC') #adding this to update to utc
-# df = df.head(100)
+    backtester = Backtester(df, initial_balance=10000, preprocessor=preprocessor, model_builder=model_builder, predictor=predictor, time_steps=time_steps, look_ahead=look_ahead, num_runs=1)
 
-# Define your parameters
-n_features = 5
-time_steps = 60  # Define your time_steps
-look_ahead = 5  # Define your look_ahead
+    backtest_results = backtester.run()
 
+    # Print out the backtest results
+    print(backtest_results)
 
-# Initialize your classes
-preprocessor = DataProcessor(df)  # Use your actual preprocessor class and its parameters
-model_builder = ModelBuilder(n_features, time_steps)  # Use your actual model builder class and its parameters
-predictor = Predictor(model=None, preprocessor=preprocessor)  # Use your actual predictor class and its parameters
+    # You can also calculate and print out the metrics
+    metrics = backtester.calculate_metrics()
+    for metric, value in metrics.items():
+        print(f'{metric}: {value}')
 
+    # And plot the portfolio values over time
+    backtester.plot_portfolio_values()
 
-backtester = Backtester(df, initial_balance=10000, preprocessor=preprocessor, model_builder=model_builder, predictor=predictor, time_steps=time_steps, look_ahead=look_ahead)
-
-backtest_results = backtester.run()
-
-
-# Print out the backtest results
-print(backtest_results)
-
-# You can also calculate and print out the metrics
-metrics = backtester.calculate_metrics()
-for metric, value in metrics.items():
-    print(f'{metric}: {value}')
-
-# And plot the portfolio values over time
-backtester.plot_portfolio_values()
+if __name__ == "__main__":
+    main()

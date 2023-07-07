@@ -105,7 +105,7 @@ def get_realTimeBars(app, contract):
 
 
 def main():
-    app, api_thread, contract = app_connect("tickdata_jul6", 7496, 8)
+    app, api_thread, contract = app_connect("tickdata_jul7", 7496, 1)
     get_realTimeData(app, contract)
     #get_historicalData(app, contract)
     #get_realTimeBars(app, contract)  # call this function with app and contract as arguments
