@@ -1,2 +1,7 @@
 env
 passwords.py
+jupyter/logs
+.vscode
+.ipynb_checkpoints
+random_search
+logs/*

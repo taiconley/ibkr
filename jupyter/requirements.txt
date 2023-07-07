@@ -11,3 +11,4 @@ scikit-learn
 protobuf==3.20.0
 backtrader
 ibapi
+keras_tuner

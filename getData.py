@@ -57,10 +57,10 @@ class App(EWrapper, EClient):
         else:
             print(f'Skipped tickType: {tickType}')  # For debugging purposes, you may want to know when data is skipped
 
-def app_connect():
+def app_connect(tableName, tws_connect_num, connect_thread):
     db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
-    app = App(db, tableName="tickdata_jun29")
-    app.connect("127.0.0.1", 7496, 1)
+    app = App(db, tableName)
+    app.connect("127.0.0.1", tws_connect_num, connect_thread)
     time.sleep(5) #use for paper trading
     contract = Contract()
     contract.symbol = "ES"
@@ -105,7 +105,7 @@ def get_realTimeBars(app, contract):
 
 
 def main():
-    app, api_thread, contract = app_connect()
+    app, api_thread, contract = app_connect("tickdata_jul6", 7496, 8)
     get_realTimeData(app, contract)
     #get_historicalData(app, contract)
     #get_realTimeBars(app, contract)  # call this function with app and contract as arguments

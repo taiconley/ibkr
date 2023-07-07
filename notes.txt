@@ -1,3 +1,9 @@
+As of July6th, use regular docker compose build --no-cache
+and docker compose up to get access to GPU. 
+
+The below instructions are no longer needed
+
+
 1) Run sudo docker context use default
 2) run docker compose without jupyter
 3) get the network with docker network ls

@@ -73,10 +73,10 @@ def paper_trade(app, api_thread, contract, preprocessor, model_builder, predicto
         print(f"expected price: {price} Action: sell, {preprocessor.processed_df['Close'][-1]}")
 
         
-def app_connect():
+def app_connect(tableName, tws_connect_num, connect_thread):
     db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host='localhost', docker=False)
-    app = App(db, tableName="tickdata_jun29")
-    app.connect("127.0.0.1", 7496, 11)
+    app = App(db, tableName)
+    app.connect("127.0.0.1", tws_connect_num, connect_thread)
     #time.sleep(5) #use for paper trading
     contract = Contract()
     contract.symbol = "ES"
@@ -91,7 +91,8 @@ def app_connect():
     return app, api_thread, contract
 
 if __name__ == "__main__":
-    app, api_thread, contract = app_connect()
+
+    app, api_thread, contract = app_connect("tickdata_jul6", 7496, 7)
     preprocessor = DataProcessor(df=None)
     model_builder = ModelBuilder(n_features=5, time_steps=60)
     predictor = Predictor(model=None, preprocessor=preprocessor)

@@ -1,14 +1,17 @@
+import os
+from datetime import datetime
+from joblib import dump, load
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dropout, Dense
 from tensorflow.keras.models import load_model
-import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import TensorBoard
-import os
-from datetime import datetime
-from joblib import dump, load
+from keras_tuner import HyperModel, RandomSearch
+
 
 
 
@@ -41,6 +44,7 @@ class DataProcessor:
 
     def process_df(self):
         # Set 'timestamp' as the index
+        #df['timestamp'] = df['timestamp'].dt.tz_localize('UTC') 
         self.df = self.df.set_index('timestamp')
         
         # Pivot the table and also include 'volume' where ticktype is 5
@@ -114,18 +118,37 @@ class ModelBuilder:
         self.time_steps = time_steps
         self.model = self.build_model()
 
+
     def build_model(self):
         model = Sequential()
-        model.add(LSTM(units=50, return_sequences=True, input_shape=(self.time_steps, self.n_features)))
+        model.add(LSTM(units=100, return_sequences=True, input_shape=(self.time_steps, self.n_features)))
         model.add(Dropout(0.2))
-        model.add(LSTM(units=50, return_sequences=False))
+        model.add(LSTM(units=100, return_sequences=True))
         model.add(Dropout(0.2))
+        model.add(LSTM(units=100, return_sequences=False))
+        model.add(Dropout(0.2))
+        model.add(Dense(units=32, activation='relu'))
         model.add(Dense(units=1))
-        model.compile(optimizer='adam', loss='mean_squared_error',  run_eagerly=True)
+        model.compile(optimizer='adam', loss='mean_squared_error', run_eagerly=True)
         return model
 
 
-    def train_model(self, X_train, y_train, X_test, y_test, epochs=20, batch_size=64):
+    def build_model_with_hyperparameters(self, best_hps):
+        model = Sequential()
+        model.add(LSTM(units=best_hps.get('units_1'), return_sequences=True, input_shape=(self.time_steps, self.n_features)))
+        model.add(Dropout(rate=best_hps.get('dropout_1')))
+        model.add(LSTM(units=best_hps.get('units_2'), return_sequences=True))
+        model.add(Dropout(rate=best_hps.get('dropout_2')))
+        model.add(LSTM(units=best_hps.get('units_3'), return_sequences=False))
+        model.add(Dropout(rate=best_hps.get('dropout_3')))
+        model.add(Dense(units=best_hps.get('dense_units'), activation='relu'))
+        model.add(Dense(units=1))
+        model.compile(optimizer='adam', loss='mean_squared_error', run_eagerly=True)
+        return model
+
+    def train_model(self, X_train, y_train, X_test, y_test, epochs=20, batch_size=64, best_hps=None):
+        if best_hps is not None:
+            self.model = self.build_model_with_hyperparameters(best_hps)
         # Specify the log directory for TensorBoard logs
         log_dir = os.path.join(
             "logs",
@@ -159,6 +182,28 @@ class ModelBuilder:
         plt.plot(history.history['val_loss'], label='test')
         plt.legend()
         plt.show()
+
+    def perform_hyperparameter_tuning(self, X_train, y_train, X_test, y_test, max_trials=10, executions_per_trial=3):
+        hypermodel = LSTMHyperModel(input_shape=(self.time_steps, self.n_features))
+
+        tuner = RandomSearch(
+            hypermodel,
+            objective='val_loss',
+            max_trials=max_trials,
+            executions_per_trial=executions_per_trial,
+            directory='random_search',
+            project_name='stock_price_prediction'
+        )
+
+        tuner.search(x=X_train, 
+                     y=y_train, 
+                     epochs=5, 
+                     validation_data=(X_test, y_test))
+
+        # Get the optimal hyperparameters
+        best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+
+        return best_hps
 
 
 
@@ -194,6 +239,25 @@ class Predictor:
         rescaled_prediction = self.preprocessor.close_scaler.inverse_transform(prediction)
         return rescaled_prediction
     
+
+
+class LSTMHyperModel(HyperModel):
+    def __init__(self, input_shape):
+        self.input_shape = input_shape
+
+    def build(self, hp):
+        model = Sequential()
+        model.add(LSTM(units=hp.Int('units_1', min_value=32, max_value=512, step=32), return_sequences=True, 
+                       input_shape=self.input_shape))
+        model.add(Dropout(rate=hp.Float('dropout_1', min_value=0.0, max_value=0.5, step=0.05)))
+        model.add(LSTM(units=hp.Int('units_2', min_value=32, max_value=512, step=32), return_sequences=True))
+        model.add(Dropout(rate=hp.Float('dropout_2', min_value=0.0, max_value=0.5, step=0.05)))
+        model.add(LSTM(units=hp.Int('units_3', min_value=32, max_value=512, step=32), return_sequences=False))
+        model.add(Dropout(rate=hp.Float('dropout_3', min_value=0.0, max_value=0.5, step=0.05)))
+        model.add(Dense(units=hp.Int('dense_units', min_value=16, max_value=128, step=16), activation='relu'))
+        model.add(Dense(units=1))
+        model.compile(optimizer='adam', loss='mean_squared_error')
+        return model
 
 def main():
     pass
