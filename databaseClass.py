@@ -120,6 +120,63 @@ class DB:
         conn.close()
         list_result = [list(row) for row in rows]
         return list_result
+
+    def addPrediction(self, timestamp, current_price, predicted_price, decision):
+        query = f'''
+        INSERT INTO predictions
+        (timestamp, current_price, predicted_price, decision)
+        VALUES
+        (%s, %s, %s, %s)
+        '''
+        conn = self.connect()
+        cur = conn.cursor()
+        # convert numpy data types to native Python data types
+        cur.execute(query, (timestamp, float(current_price), float(predicted_price), decision))
+        conn.commit()
+        conn.close()
+
+
+
+    def addAccountSummary(self, timestamp, key, val, currency, accountName):
+        query = f'''
+        INSERT INTO account_summary
+        (timestamp, key, val, currency, accountName)
+        VALUES
+        (%s, %s, %s, %s, %s)
+        '''
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute(query, (timestamp, key, val, currency, accountName))
+        conn.commit()
+        conn.close()
+
+    def addPortfolio(self, timestamp, contract, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName):
+        query = f'''
+        INSERT INTO portfolio 
+        (timestamp, contract_symbol, contract_secType, contract_currency, contract_exchange, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName) 
+        VALUES 
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
+
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute(query, (timestamp, contract.symbol, contract.secType, contract.currency, contract.exchange, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName))
+        conn.commit()
+        conn.close()
+
+    def addPosition(self,timestamp, reqId, account, modelCode, contract, pos, avgCost):
+        query = f'''
+        INSERT INTO positions
+        (timestamp, reqId, account, modelCode, symbol, secType, currency, exchange, pos, avgCost)
+        VALUES
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        '''
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute(query, (timestamp, reqId, account, modelCode, contract.symbol, contract.secType, contract.currency, contract.exchange, pos, avgCost))
+        conn.commit()
+        conn.close()
+
     
+            
 if __name__ == '__main__':
     pass

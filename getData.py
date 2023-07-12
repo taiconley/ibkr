@@ -85,7 +85,7 @@ def get_realTimeData(app, contract):
     # Request Market Data
     app.reqMktData(1, contract, "", False, False, [])
     # Let it run for a minute
-    time.sleep(6000) 
+    time.sleep(60000) 
     # Disconnect
     app.disconnect()
 
@@ -105,7 +105,7 @@ def get_realTimeBars(app, contract):
 
 
 def main():
-    app, api_thread, contract = app_connect("tickdata_jul7", 7496, 1)
+    app, api_thread, contract = app_connect("tickdata_jul10", 7497, 5)
     get_realTimeData(app, contract)
     #get_historicalData(app, contract)
     #get_realTimeBars(app, contract)  # call this function with app and contract as arguments

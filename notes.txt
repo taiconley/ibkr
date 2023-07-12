@@ -14,7 +14,8 @@ remove the container: sudo docker rm my-jupyter-gpu-ibkr-container
 
 
 
-
+If I need to add the docker alias:
+alias docker='docker -H unix:///var/run/docker.sock'
 
 docker ps: This command lists all the running containers. Add the -a option to see all containers, not just the running ones.
 

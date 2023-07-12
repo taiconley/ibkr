@@ -72,7 +72,7 @@ class Backtester:
             
             X = self.preprocessor.scaled_df
             X = self.preprocessor.create_dataset(X, y=None, time_steps=self.time_steps, look_ahead=0, for_training=False)
-            predictions = self.predictor.predict(time_steps=self.time_steps, for_training=False, batch_size=50)
+            predictions = self.predictor.predict(time_steps=self.time_steps, for_training=False, batch_size=5936)
             rescaled_predictions = self.predictor.rescale_prediction(predictions)
             price = rescaled_predictions[-1][0]
             self.data.iat[i, self.data.columns.get_loc('Predicted')] = price
