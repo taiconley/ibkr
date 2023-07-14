@@ -1,31 +1,3 @@
-# from ibapi.client import EClient
-# from ibapi.wrapper import EWrapper
-
-# class App(EWrapper, EClient):
-#     def __init__(self):
-#         EClient.__init__(self, self)
-
-#     def accountSummary(self, reqId: int, account: str, tag: str, value: str, currency: str):
-#         print(f"Account: {account}, {tag}: {value} {currency}")
-
-#     def error(self, reqId, errorCode, errorString):
-#         print(f"Error: {reqId}, {errorCode}, {errorString}")
-
-# def main():
-#     app = App()
-
-#     app.connect("127.0.0.1", 7497, clientId=4) # adjust as needed
-
-#     app.reqAccountSummary(1, "All", "$LEDGER:ALL") # This will request account summary for all accounts.
-
-#     app.run()
-
-#     app.cancelAccountSummary(1)
-#     app.disconnect()
-
-# if __name__ == "__main__":
-#     main()
-
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
 from ibapi.contract import Contract
@@ -68,7 +40,7 @@ class App(EWrapper, EClient):
 def main():
     db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host='localhost', docker=False)
     app = App(db)
-    app.connect("127.0.0.1", 7497, clientId=14) # adjust as needed
+    app.connect("127.0.0.1", 7497, clientId=15) # adjust as needed
 
     app.reqAccountUpdates(True, "") # This will request real-time account updates.
     app.reqPositionsMulti(1, "", "") # This will request real-time position updates for all accounts.

@@ -111,6 +111,16 @@ class DB:
         df = pd.read_sql_query(query, con=conn)
         return df
 
+
+    def DBtoValue(self, query):
+        '''runs query and returns a single value'''
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        value = cursor.fetchone()[0]
+        conn.close()
+        return value
+
     def DBtoList(self, query):
         '''runs query and returns a list'''
         conn = self.connect()

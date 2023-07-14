@@ -13,6 +13,9 @@ The below instructions are no longer needed
 remove the container: sudo docker rm my-jupyter-gpu-ibkr-container
 
 
+use this to connect to container
+docker exec -it <container_name_or_id> /bin/bash
+to leave, type exit and shift enter (or just enter)
 
 If I need to add the docker alias:
 alias docker='docker -H unix:///var/run/docker.sock'

@@ -28,31 +28,42 @@ class App(EWrapper, EClient):
         EClient.__init__(self, self)
         self.db = db
         self.tableName = tableName
-        self.positions = {}
-        self.equityWithLoanValue = None
 
-    def accountSummary(self, reqId, account, tag, value, currency):
-        if tag == AccountSummaryTags.NetLiquidation:
-            self.equityWithLoanValue = float(value)
-        elif tag == AccountSummaryTags.PositionsValue:
-            self.positions[account] = float(value)
 
-    def requestAccountSummary(self):
-        self.reqAccountSummary(1, "All", AccountSummaryTags.AllTags)
 
-    def cancelAccountSummary(self):
-        self.reqAccountUpdates(1)
+    def get_buying_power(self):
+        query = '''
+        SELECT 
+        val
+        FROM public.account_summary
+        where "key" = 'BuyingPower'
+        order by "timestamp" desc
+        limit 1
+        '''
+        buying_power = self.db.DBtoValue(query)
+        return buying_power
+    
+
+    def get_ES_positions(self):
+        query = '''
+        SELECT 
+        pos
+        FROM public.positions
+        where "symbol" = 'ES'
+        order by "timestamp" desc
+        limit 1
+        '''
+        total_ES_positions = self.db.DBtoValue(query)
+        return total_ES_positions
 
 def paper_trade(app, api_thread, contract, preprocessor, model_builder, predictor, time_steps, look_ahead):
     # Check account details
-    app.requestAccountSummary()
-    time.sleep(2)  # Allow some time for the account summary to be received
-    available_margin = app.equityWithLoanValue
-    total_ES_positions = app.positions.get("ES", 0)
-    app.cancelAccountSummary()
+
+    buying_power = float(app.get_buying_power())
+    total_ES_positions = int(app.get_ES_positions())
 
     # Do not proceed if not enough margin or too many ES positions
-    if available_margin < 5000 or total_ES_positions >= 3:
+    if buying_power < 5000 or total_ES_positions >= 3:
         return
 
     # Get current time
@@ -62,7 +73,7 @@ def paper_trade(app, api_thread, contract, preprocessor, model_builder, predicto
     five_minutes_ago = now - datetime.timedelta(minutes=5)
 
     # Process data
-    new_data = app.db.DBtoDF(f"SELECT * FROM tickdata_jul10 WHERE timestamp BETWEEN '{five_minutes_ago}' AND '{now}'")
+    new_data = app.db.DBtoDF(f"SELECT * FROM tickdata_jul13 WHERE timestamp BETWEEN '{five_minutes_ago}' AND '{now}'")
     preprocessor.df = new_data
     preprocessor.process_df()
     preprocessor.processed_df = preprocessor.processed_df.tail(250) #do more here to decide how much data to include (ie, everthing after nulls)
@@ -83,7 +94,7 @@ def paper_trade(app, api_thread, contract, preprocessor, model_builder, predicto
     current_price = preprocessor.processed_df['Close'][-1]
 
     # Determine action based on predicted price
-    if price > current_price * 1.05:
+    if price > current_price * 1.05 and buying_power > 5000 and total_ES_positions <=3:
         action = "BUY"
         app.db.addPrediction(now, float(current_price), float(price), action)
         order = Order()
@@ -120,13 +131,13 @@ def app_connect(tableName, tws_connect_num, connect_thread):
 
 
 def main():
-    app, api_thread, contract = app_connect("tickdata_jul10", 7497, 21)
+    app, api_thread, contract = app_connect("tickdata_jul13", 7497, 21)
     preprocessor = DataProcessor(df=None)
     model_builder = ModelBuilder(n_features=5, time_steps=60)
     predictor = Predictor(model=None, preprocessor=preprocessor)
     while True:
         paper_trade(app, api_thread, contract, preprocessor, model_builder, predictor, time_steps=60, look_ahead=5)
-        time.sleep(1)
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()

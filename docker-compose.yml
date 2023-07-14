@@ -46,4 +46,4 @@ services:
 volumes:
   ibkr_db:
   ibkr_web:
-  # jupyter:
+  jupyter:

@@ -1,0 +1,43 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding-top: 50px;
+    text-align: left; /* Center the title */
+}
+
+h1 {
+    color: rgb(108, 105, 105);
+}
+
+.table-container {
+    display: flex;
+    flex-direction: column; /* Stack tables vertically */
+    justify-content: flex-start; /* Left align the tables */
+    align-items: flex-start; /* Align items to the start of the container */
+}
+
+.table {
+    width: 100%; /* Make tables full width */
+    margin: 15px 0; /* Add some vertical space between the tables */
+    border-collapse: collapse;
+}
+
+.table td, .table th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #a8bcbe; /* Change the color of the header */
+    color: white;
+}

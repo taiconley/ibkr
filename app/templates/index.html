@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Monitor</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Service Monitor</h1>
+        <div class="table-container">
+            <div>
+                <h2>Get Data</h2>
+                <table class="table getData">
+                    <!-- Table data filled by JavaScript -->
+                </table>
+            </div>
+            <div>
+                <h2>Account Summary</h2>
+                <table class="table accountSummary">
+                    <!-- Table data filled by JavaScript -->
+                </table>
+            </div>
+            <div>
+                <h2>Live Trading</h2>
+                <table class="table liveTrading">
+                    <!-- Table data filled by JavaScript -->
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script>
+        function updateTables() {
+            fetch('/monitor')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.table.getData').innerHTML = generateTableHtml(data.getData);
+                    document.querySelector('.table.accountSummary').innerHTML = generateTableHtml(data.accountSummary);
+                    document.querySelector('.table.liveTrading').innerHTML = generateTableHtml(data.liveTrading);
+                });
+        }
+
+        function generateTableHtml(data) {
+            let html = '<tr>';
+            for (let key in data) {
+                html += `<th>${key}</th>`;
+            }
+            html += '</tr>';
+            html += '<tr>';
+            for (let key in data) {
+                html += `<td>${data[key]}</td>`;
+            }
+            html += '</tr>';
+            return html;
+        }
+
+        setInterval(updateTables, 5000);
+    </script>
+</body>
+</html>

@@ -100,11 +100,11 @@ def app_connect(tableName, tws_connect_num, connect_thread):
     return app, api_thread, contract
 
 if __name__ == "__main__":
-    table_name = "tickdata_jul10"
-    app, api_thread, contract = app_connect(table_name, 7496, 3)
+    table_name = "tickdata_jul13"
+    app, api_thread, contract = app_connect(table_name, 7497, 3)
     preprocessor = DataProcessor(df=None)
     model_builder = ModelBuilder(n_features=5, time_steps=60)
     predictor = Predictor(model=None, preprocessor=preprocessor)
     while True:
         paper_trade(app, table_name, api_thread, contract, preprocessor, model_builder, predictor, time_steps=60, look_ahead=5)
-        time.sleep(1)
+        # time.sleep(1)
