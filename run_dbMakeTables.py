@@ -1,5 +1,6 @@
 from databaseClass import DB
 import passwords
+from sql_files import queries
 
 userName = passwords.userName
 userPass = passwords.userPass
@@ -17,7 +18,7 @@ fieldList = '''(
 )
 '''
 
-db.buildTable("TickData_jul13", fieldList)
+db.buildTable(queries.tickdata_date, fieldList)
 
 #db.dropTable("TickData_jun14")
 

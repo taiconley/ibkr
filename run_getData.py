@@ -6,11 +6,14 @@ import time
 import pandas as pd
 from databaseClass import DB
 import passwords
+from sql_files import queries
+
 
 userName = passwords.userName
 userPass = passwords.userPass
 dataBaseName = passwords.dataBaseName
 host = passwords.host
+table_date = queries.tickdata_date
 
 class App(EWrapper, EClient):
     def __init__(self, db, tableName):
@@ -105,7 +108,7 @@ def get_realTimeBars(app, contract):
 
 
 def main():
-    app, api_thread, contract = app_connect("tickdata_jul13", 7497, 34)
+    app, api_thread, contract = app_connect(table_date, 7497, 1)
     get_realTimeData(app, contract)
     #get_historicalData(app, contract)
     #get_realTimeBars(app, contract)  # call this function with app and contract as arguments

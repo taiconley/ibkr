@@ -1,6 +1,4 @@
 import sys
-
-
 import os
 import datetime
 import pandas as pd
@@ -33,8 +31,6 @@ host = passwords.host
 
 db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
 
-
-
 class Backtester:
     def __init__(self, raw_data, initial_balance, preprocessor, model_builder, predictor, time_steps, look_ahead, num_runs):
         self.raw_data = raw_data
@@ -58,36 +54,52 @@ class Backtester:
 
     def run(self):
         position = 0
+        max_position = 3 
         # Preprocess the entire raw data
         self.preprocessor.df = self.raw_data.copy()
         self.preprocessor.process_df()
         self.preprocessor.scale_shift_data(look_ahead=0, for_training=False)
         for i in range(self.time_steps, len(self.data)):
             # Get the preprocessed data for the past 'time_steps' periods
-            new_data = self.preprocessor.processed_df.iloc[i - self.time_steps : i]
             
+            new_data = self.preprocessor.processed_df.iloc[i - self.time_steps : i]
+            new_data.to_csv(f"newdata/{i}.csv")
+            if new_data.empty:
+                continue
+
             # Assume that your preprocessed data now has a 'Close' column
             actual_price_now = new_data['Close'].iloc[-1]  # Get the latest 'Close' price
             self.data.iat[i, self.data.columns.get_loc('Actual')] = actual_price_now  # Update 'Actual' price
             
             X = self.preprocessor.scaled_df
             X = self.preprocessor.create_dataset(X, y=None, time_steps=self.time_steps, look_ahead=0, for_training=False)
-            predictions = self.predictor.predict(time_steps=self.time_steps, for_training=False, batch_size=5936)
+            predictions = self.predictor.predict(time_steps=self.time_steps, for_training=False, batch_size=6925)
             rescaled_predictions = self.predictor.rescale_prediction(predictions)
             price = rescaled_predictions[-1][0]
             self.data.iat[i, self.data.columns.get_loc('Predicted')] = price
 
             actual_price_now = self.data.iat[i, self.data.columns.get_loc('Actual')]
             # Buy condition
-            if price > actual_price_now and position != 1:
+            # if price > actual_price_now and position != 1:
+            #     self.data.iat[i, self.data.columns.get_loc('Order')] = 1
+            #     self.data.iat[i, self.data.columns.get_loc('Cash')] -= actual_price_now
+            #     position = 1
+            if price > actual_price_now and position < max_position:
                 self.data.iat[i, self.data.columns.get_loc('Order')] = 1
                 self.data.iat[i, self.data.columns.get_loc('Cash')] -= actual_price_now
-                position = 1
+                position += 1  # increment position
+
+
             # Sell condition
-            elif price < actual_price_now and position != -1:
+            # elif price < actual_price_now and position != -1:
+            #     self.data.iat[i, self.data.columns.get_loc('Order')] = -1
+            #     self.data.iat[i, self.data.columns.get_loc('Cash')] += actual_price_now
+            #     position = -1
+            elif price < actual_price_now and position > -max_position:
                 self.data.iat[i, self.data.columns.get_loc('Order')] = -1
                 self.data.iat[i, self.data.columns.get_loc('Cash')] += actual_price_now
-                position = -1
+                position -= 1  # decrement position
+
             self.data.iat[i, self.data.columns.get_loc('Holdings')] = position * actual_price_now
             self.data.iat[i, self.data.columns.get_loc('Total')] = self.data.iat[i, self.data.columns.get_loc('Cash')] + self.data.iat[i, self.data.columns.get_loc('Holdings')]
             # Copy Cash and Holdings to the next row
@@ -138,6 +150,14 @@ class Backtester:
 def main():
     input_sql_file='sql_files/test.sql'
     df = generate_df_from_sql_file(input_sql_file, db)
+
+    # start_date = '2023-07-14'
+    # end_date = '2023-07-15'
+    # date_mask = (df['timestamp'] >= start_date) & (df['timestamp'] < end_date)
+    # time_mask = (df['timestamp'].dt.time >= pd.to_datetime('17:00:00').time()) & (df['timestamp'].dt.time <= pd.to_datetime('17:25:00').time())
+    # df = df[date_mask & time_mask]
+    # print(df.info())
+
     df['timestamp'] = df['timestamp'].dt.tz_localize('UTC') #adding this to update to utc
 
     # Define your parameters
@@ -150,10 +170,7 @@ def main():
     preprocessor = DataProcessor(df)  # Use your actual preprocessor class and its parameters
     model_builder = ModelBuilder(n_features, time_steps)  # Use your actual model builder class and its parameters
     predictor = Predictor(model=None, preprocessor=preprocessor)  # Use your actual predictor class and its parameters
-
-
     backtester = Backtester(df, initial_balance=10000, preprocessor=preprocessor, model_builder=model_builder, predictor=predictor, time_steps=time_steps, look_ahead=look_ahead, num_runs=1)
-
     backtest_results = backtester.run()
 
     # Print out the backtest results

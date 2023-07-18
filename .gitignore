@@ -5,3 +5,4 @@ jupyter/logs
 .ipynb_checkpoints
 random_search
 logs/*
+newdata/*

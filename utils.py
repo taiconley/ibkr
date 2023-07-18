@@ -13,8 +13,6 @@ from tensorflow.keras.callbacks import TensorBoard
 from keras_tuner import HyperModel, RandomSearch
 
 
-
-
 def generate_sql(input_sql_file):
     with open(input_sql_file, 'r') as file:
         sql = file.read()
@@ -233,14 +231,6 @@ class Predictor:
         X = self.prepare_data(time_steps, for_training)
         predictions = self.model.predict(X, batch_size=batch_size)
         return predictions
-
-    # def predict(self, time_steps=None, for_training=False, run_eagerly=True):
-    #     X = self.prepare_data(time_steps, for_training)
-    #     if run_eagerly:
-    #         predictions = self.model.predict(X)
-    #     else:
-    #         predictions = self.model.predict(X, batch_size=self.batch_size)
-    #     return predictions
 
     def rescale_prediction(self, prediction):
         prediction = prediction.reshape(-1, 1)  # ensure it's a 2D array

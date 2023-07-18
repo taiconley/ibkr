@@ -37,7 +37,7 @@ class TestApp(EWrapper, EClient):
 def main():
     app = TestApp()
 
-    app.connect("127.0.0.1", 7497, 9)
+    app.connect("127.0.0.1", 7497, 8)
 
     app.run()
 
