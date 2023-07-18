@@ -104,7 +104,7 @@ def paper_trade(app, api_thread, contract, preprocessor, model_builder, predicto
     five_minutes_ago = now - datetime.timedelta(minutes=5)
 
     # Process data
-    new_data = app.db.DBtoDF(f"SELECT * FROM {queries.tickdata_date}WHERE timestamp BETWEEN '{five_minutes_ago}' AND '{now}'")
+    new_data = app.db.DBtoDF(f"SELECT * FROM {queries.tickdata_date} WHERE timestamp BETWEEN '{five_minutes_ago}' AND '{now}'")
     preprocessor.df = new_data
     preprocessor.process_df()
     preprocessor.processed_df = preprocessor.processed_df.tail(250) #do more here to decide how much data to include (ie, everthing after nulls)
@@ -160,14 +160,14 @@ def app_connect(tableName, tws_connect_num, connect_thread):
 
 
 def main():
-    app, api_thread, contract = app_connect(queries.tickdata_date, 7497, 28)
+    app, api_thread, contract = app_connect(queries.tickdata_date, 7497, 22)
     app.contract = contract
     preprocessor = DataProcessor(df=None)
     model_builder = ModelBuilder(n_features=5, time_steps=60)
     predictor = Predictor(model=None, preprocessor=preprocessor)
     while True:
         paper_trade(app, api_thread, contract, preprocessor, model_builder, predictor, time_steps=60, look_ahead=5)
-        time.sleep(5)
+        time.sleep(2)
 
 if __name__ == "__main__":
     main()

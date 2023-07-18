@@ -9,6 +9,7 @@ host = passwords.host
 
 db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
 
+db.dropTable(queries.tickdata_date)
 
 fieldList = '''(
             tickType INT,
@@ -20,19 +21,21 @@ fieldList = '''(
 
 db.buildTable(queries.tickdata_date, fieldList)
 
-#db.dropTable("TickData_jun14")
+
 
 # print(db.tables)
 
-# fieldList_predictions = '''
-#     (
-#     timestamp TIMESTAMP NOT NULL,
-#     current_price FLOAT,
-#     predicted_price FLOAT,
-#     decision CHAR(50)
-#     )
-# '''
-# db.buildTable('predictions', fieldList_predictions)
+db.dropTable("predictions")
+
+fieldList_predictions = '''
+    (
+    timestamp TIMESTAMP NOT NULL,
+    current_price FLOAT,
+    predicted_price FLOAT,
+    decision CHAR(50)
+    )
+'''
+db.buildTable('predictions', fieldList_predictions)
 
 # db.dropTable("account_summary")
 # db.dropTable("positions")
