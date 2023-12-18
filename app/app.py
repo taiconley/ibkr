@@ -1,5 +1,7 @@
 import sys
-sys.path.append("/ibkr")
+# sys.path.append("/ibkr")
+sys.path.append("..")
+
 import passwords
 from databaseClass import DB
 from sql_files import queries
@@ -15,7 +17,8 @@ host = passwords.host
 app = Flask(__name__)
 
 # Replace these with your actual PostgreSQL credentials
-db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host='ibkr_db', docker=True)
+# db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host='ibkr_db', docker=True)
+db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
 
 
 @app.route('/')

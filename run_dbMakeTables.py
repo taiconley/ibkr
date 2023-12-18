@@ -9,33 +9,125 @@ host = passwords.host
 
 db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host=host, docker=False)
 
-db.dropTable(queries.tickdata_date)
+# db.dropTable(queries.tickdata_date)
 
-fieldList = '''(
-            tickType INT,
-            Price FLOAT,
-            Volume INT,
-            timestamp TIMESTAMP
-)
-'''
+# fieldList = '''(
+#             tickType INT,
+#             Price FLOAT,
+#             Volume INT,
+#             timestamp TIMESTAMP
+# )
+# '''
 
-db.buildTable(queries.tickdata_date, fieldList)
+# db.buildTable(queries.tickdata_date, fieldList)
+
+# db.dropTable(f"{queries.tickdata_date}_l2")
+# fieldList_l2table = '''(
+#             position INT,
+#             operation INT,
+#             side INT,
+#             price FLOAT,
+#             size INT,
+#             timestamp TIMESTAMP
+# )
+# '''
+
+# db.buildTable(f"{queries.tickdata_date}_l2", fieldList_l2table)
+
+
+# db.dropTable("pairs")
+# fieldList_historical_pairs_data = '''(
+#             date TIMESTAMP,
+#             ticker VARCHAR(10),
+#             open FLOAT,
+#             high FLOAT,
+#             low FLOAT,
+#             close FLOAT,
+#             volume INT,
+#             count INT,
+#             WAP FLOAT
+# )'''
+# db.buildTable("pairs", fieldList_historical_pairs_data)
+
+# db.dropTable("pairs_hourly")
+# fieldList_historical_pairs_hourly = '''(
+#             date TIMESTAMP,
+#             ticker VARCHAR(10),
+#             open FLOAT,
+#             high FLOAT,
+#             low FLOAT,
+#             close FLOAT,
+#             volume INT,
+#             count INT,
+#             WAP FLOAT
+# )'''
+# db.buildTable("pairs_hourly", fieldList_historical_pairs_hourly)
+
+
+
+
+# db.dropTable("pairs_live_trading")
+# fieldList_pairs_live_trading = '''(
+#             date TIMESTAMP,
+#             ticker VARCHAR(10),
+#             open FLOAT,
+#             high FLOAT,
+#             low FLOAT,
+#             close FLOAT,
+#             volume INT,
+#             count INT,
+#             WAP FLOAT
+# )'''
+# db.buildTable("pairs_live_trading", fieldList_pairs_live_trading)
+
+db.dropTable("pairs_live_analyzed_data_30_seconds")
+db.dropTable("pairs_live_analyzed_data_300_seconds")
+
+fieldList_pairs_live_analyzed_data = '''(
+            timestamp TIMESTAMP,
+            Ticker1 VARCHAR(10),
+            Ticker2	VARCHAR(10),
+            open_ticker1_mean FLOAT,
+            open_ticker1_std FLOAT,
+            volume_ticker1_mean FLOAT,
+            volume_ticker1_std FLOAT,
+            count_ticker1_mean FLOAT,
+            count_ticker1_std FLOAT,
+            wap_ticker1_mean FLOAT,
+            wap_ticker1_std FLOAT,
+            open_ticker2_mean FLOAT,
+            open_ticker2_std FLOAT,
+            volume_ticker2_mean FLOAT,
+            volume_ticker2_std FLOAT,
+            count_ticker2_mean FLOAT,
+            count_ticker2_std FLOAT,
+            wap_ticker2_mean FLOAT,
+            wap_ticker2_std FLOAT,
+            open_ratio_mean FLOAT,
+            open_ratio_std FLOAT,
+            wap_ratio_mean FLOAT,
+            wap_ratio_std FLOAT
+            
+)'''
+db.buildTable("pairs_live_analyzed_data_30_seconds", fieldList_pairs_live_analyzed_data)
+db.buildTable("pairs_live_analyzed_data_300_seconds", fieldList_pairs_live_analyzed_data)
+
 
 
 
 # print(db.tables)
 
-db.dropTable("predictions")
+# db.dropTable("predictions")
 
-fieldList_predictions = '''
-    (
-    timestamp TIMESTAMP NOT NULL,
-    current_price FLOAT,
-    predicted_price FLOAT,
-    decision CHAR(50)
-    )
-'''
-db.buildTable('predictions', fieldList_predictions)
+# fieldList_predictions = '''
+#     (
+#     timestamp TIMESTAMP NOT NULL,
+#     current_price FLOAT,
+#     predicted_price FLOAT,
+#     decision CHAR(50)
+#     )
+# '''
+# db.buildTable('predictions', fieldList_predictions)
 
 # db.dropTable("account_summary")
 # db.dropTable("positions")

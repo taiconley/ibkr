@@ -1,14 +1,14 @@
 import sys
 sys.path.append("/ibkr")
 
-tickdata_date = 'tickdata_jul18'
+tickdata_date = 'tickdata_aug1'
 
 sql_last_tick = f"""
-SELECT timestamp FROM {tickdata_date} ORDER BY timestamp DESC LIMIT 1
+SELECT timestamp FROM {tickdata_date}_l2 ORDER BY timestamp DESC LIMIT 1
 """
 
 sql_total_ticks = f"""
-SELECT COUNT(*) FROM {tickdata_date}
+SELECT COUNT(*) FROM {tickdata_date}_l2
 """
 
 sql_buying_power = '''
@@ -77,4 +77,15 @@ sql_cash_balance = '''
     where "key" = 'CashBalance'
     order by "timestamp" desc
     limit 1
+'''
+
+sql_l2 = f'''
+SELECT *
+FROM {tickdata_date}_l2;
+'''
+
+###### Queries for pairs
+
+sql_pairs_tickers = f'''
+SELECT * FROM public.pairs_ticker_list
 '''

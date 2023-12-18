@@ -1,7 +1,8 @@
 // index.js
 document.addEventListener('DOMContentLoaded', function () {
-    updateTables();
-    setInterval(updateTables, 5000);
+    // updateTables();
+    // setInterval(updateTables, 500)
+    ;
 });
 
 function updateTables() {

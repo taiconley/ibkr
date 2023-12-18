@@ -34,29 +34,25 @@ class DataProcessor:
         self.df = df
         self.processed_df = None
         self.scaled_df = None
-        self.look_ahead = None  # add this line
+        self.look_ahead = None
         self.scaler = MinMaxScaler(feature_range=(0, 1))  # for entire dataset
         self.close_scaler = MinMaxScaler(feature_range=(0, 1))  # for 'Close' column only
 
     def process_df(self):
-        # Set 'timestamp' as the index
-        #df['timestamp'] = df['timestamp'].dt.tz_localize('UTC') 
+        # self.df['timestamp'] = pd.to_datetime(self.df['timestamp']).dt.tz_localize('America/Los_Angeles').dt.tz_convert('UTC')
+        self.df['timestamp'] = pd.to_datetime(self.df['timestamp'], utc=True)
+        bins = [-np.inf, 0, 1, 2, 3, np.inf]
+        names = ['0', '1', '2', '3', '4+']
+        self.df['position_binned'] = pd.cut(self.df['position'], bins, labels=names)
         self.df = self.df.set_index('timestamp')
-        
-        # Pivot the table and also include 'volume' where ticktype is 5
-        df_pivot = self.df.pivot_table(index=self.df.index, columns='ticktype', values=['price', 'volume'])
-        df_pivot.columns = ['_'.join(map(str,i)) for i in df_pivot.columns]
-        
-        # Resample the data per second and fill forward any NaN values
-        df_resampled = df_pivot.resample('1S').agg({'price_1': 'last', 'price_2': 'last', 'price_4': 'last', 'volume_5': 'sum'}).ffill()
-        
-        # Reshape
-        df_resampled['Open'] = df_resampled['price_1']
-        df_resampled['High'] = df_resampled[['price_1', 'price_2', 'price_4']].max(axis=1)
-        df_resampled['Low'] = df_resampled[['price_1', 'price_2', 'price_4']].min(axis=1)
-        df_resampled['Close'] = df_resampled['price_4']
-        df_resampled['Volume'] = df_resampled['volume_5']
-        self.processed_df = df_resampled[['Open', 'High', 'Low', 'Close', 'Volume']]
+        self.df = self.df.drop(columns=['position'])
+        self.df = self.df.drop(columns=['operation']) #dropping operation for now, as majority of operations are 1, not 0
+        resampled_df = self.df.groupby([pd.Grouper(freq='1S'), 'position_binned', 'side']).mean() #dropped operation, it was initially the second level
+        resampled_df = resampled_df.reset_index()
+        pivot_df = resampled_df.pivot_table(index='timestamp', columns=['position_binned', 'side']) #dropped operation, it was initially the second level
+        pivot_df.columns = ['_'.join(str(i) for i in col) for col in pivot_df.columns]
+        self.processed_df = pivot_df.fillna(method='ffill')
+        self.processed_df = self.processed_df.dropna()
 
     def create_train_test_split(self, X, y, train_ratio=0.8):
         train_size = int(len(X) * train_ratio)
@@ -70,7 +66,7 @@ class DataProcessor:
     def scale_shift_data(self, look_ahead, for_training=True):
         # Normalize the dataset
         scaled = self.scaler.fit_transform(self.processed_df)
-        self.close_scaler.fit(self.processed_df[['Close']])  # fit the close_scaler
+        self.close_scaler.fit(self.processed_df[['price_0_0']])  # fit the close_scaler. NOT SURE THIS IS THE RIGHT PRICE COLUMN
 
         # Save the scalers
         dump(self.scaler, 'scaler.joblib')

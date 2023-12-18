@@ -84,6 +84,8 @@ class DB:
     def DFtoDB(self, df, tableName):
         """
         Using psycopg2.extras.execute_values() to insert the dataframe
+        df: the dataframe to send to database
+        tableName: The table name you want to write to
         """
         # Create a list of tupples from the dataframe values
         tuples = [tuple(x) for x in df.to_numpy()]

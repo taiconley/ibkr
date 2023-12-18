@@ -21,8 +21,12 @@ class App(EWrapper, EClient):
         self.db = db
         self.tableName = tableName
 
-    def error(self, reqId, errorCode, errorString):
-        print("Error: ", reqId, " ", errorCode, " ", errorString)
+    # def error(self, reqId, errorCode, errorString):
+    #     print("Error: ", reqId, " ", errorCode, " ", errorString)
+
+    
+    # def error(self, reqId, errorCode, errorString, contract):
+    #      print(f"Error {reqId} {errorCode} {errorString}")
 
     def historicalData(self, reqId, bar):
         print("HistoricalData. ", reqId, " Date:", bar.date, "Open:", bar.open,
@@ -37,6 +41,7 @@ class App(EWrapper, EClient):
     #     print("RealTimeBar. ", reqId, " Time:", time, "Open:", open,
     #           "High:", high, "Low:", low, "Close:", close, "Volume:", volume,
     #           "Count:", count, "WAP:", wap)
+
 
     def realTimeBar(self, reqId, time, open, high, low, close, volume, wap, count):
         super().realtimeBar(reqId, time, open, high, low, close, volume, wap, count)
@@ -66,11 +71,16 @@ def app_connect(tableName, tws_connect_num, connect_thread):
     app.connect("127.0.0.1", tws_connect_num, connect_thread)
     time.sleep(5) #use for paper trading
     contract = Contract()
-    contract.symbol = "ES"
-    contract.secType = "FUT"
-    contract.exchange = "CME"
+    # contract.symbol = "ES"
+    # contract.secType = "FUT"
+    # contract.exchange = "CME"
+    # contract.currency = "USD"
+    # contract.lastTradeDateOrContractMonth = "202309" # Please check the contract month
+
+    contract.symbol = "FRME"
+    contract.secType = "STK"
     contract.currency = "USD"
-    contract.lastTradeDateOrContractMonth = "202309" # Please check the contract month
+    contract.exchange = "SMART"
 
     # Start the socket in a thread
     api_thread = threading.Thread(target=app.run, daemon=True)
@@ -108,10 +118,11 @@ def get_realTimeBars(app, contract):
 
 
 def main():
-    app, api_thread, contract = app_connect(table_date, 7497, 1)
-    get_realTimeData(app, contract)
+    app, api_thread, contract = app_connect(table_date, 7496, 1)
+    #get_realTimeData(app, contract)
     #get_historicalData(app, contract)
-    #get_realTimeBars(app, contract)  # call this function with app and contract as arguments
+    time.sleep(5)
+    get_realTimeBars(app, contract)  # call this function with app and contract as arguments
 
 
 if __name__ == "__main__":

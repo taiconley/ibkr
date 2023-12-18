@@ -54,3 +54,8 @@ Side: This indicates whether the entry in the order book is a bid (buy order) or
 
 0 = Bid
 1 = Ask
+
+price_0_0_0
+first column is position
+second column is operation
+third column is Side
