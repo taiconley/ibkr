@@ -80,12 +80,31 @@ def get_realTimeBars(app, contract, reqId):
 
 
 def main():
-    app, api_thread, = app_connect(tableName, 7497, 1)
-    tickers = ['CAC','CCS','CIVB','CNOB','DCOM','FFIC','FISI','FLIC','FRME','FRST',
-               'IBTX','JOAN','KBH','LBAI','LEN','LILA','LILAK','MDC','MHO','MNTS',
-               'MTH','MYFW','NWBI','OCFC','PHM','PPBI','RBB','SFST','TCBK','TCMD',
-               'THFF','TMHC','TMP','TPH','WSBC'
-    ]
+    app, api_thread, = app_connect(tableName, 7497, 4)
+    # tickers = ['CAC','CCS','CIVB','CNOB','DCOM','FFIC','FISI','FLIC','FRME','FRST',
+    #            'IBTX','JOAN','KBH','LBAI','LEN','LILA','LILAK','MDC','MHO','MNTS',
+    #            'MTH','MYFW','NWBI','OCFC','PHM','PPBI','RBB','SFST','TCBK','TCMD',
+    #            'THFF','TMHC','TMP','TPH','WSBC'
+    # ]
+    tickers =   ['EPAC',
+                    'SPXC']
+                    # 'QTWO',
+                    # 'SPXC',
+                    # 'QTWO',
+                    # 'WAB',
+                    # 'SKYW',
+                    # 'TDG',
+                    # 'IR',
+                    # 'LRCX',
+                    # 'SPXC',
+                    # 'WAB',
+                    # 'GFF',
+                    # 'HLT',
+                    # 'CVLT',
+                    # 'TXRH']
+
+
+
     # unique request ID for each ticker
     for index, ticker in enumerate(tickers, start=1):  # starting from reqId=1
         contract = Contract()
