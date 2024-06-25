@@ -2,6 +2,7 @@ import psycopg2
 import psycopg2.extras as extras
 
 import pandas as pd
+import numpy as np
 import io
 import json
 
@@ -104,6 +105,37 @@ class DB:
             cursor.close()
             return 1
         #print("execute_values() done")
+        cursor.close()
+
+    def DFRowtoDB(self, df_row, tableName):
+        """
+        Using psycopg2.extras.execute_values() to insert a single dataframe row into the database.
+        df_row: the dataframe row to send to database, expected to be a DataFrame with one row
+        tableName: The table name you want to write to
+        """
+        # Ensure df_row is a DataFrame with exactly one row
+        if len(df_row) != 1:
+            raise ValueError("DFRowtoDB expects a DataFrame with exactly one row")
+
+        # Create a list of tuples from the dataframe values, should be exactly one tuple
+        tuples = [tuple(df_row.iloc[0].to_numpy())]
+        
+        # Comma-separated dataframe columns
+        cols = ','.join(list(df_row.columns))
+        
+        # SQL query to execute
+        query = "INSERT INTO %s(%s) VALUES %%s" % (tableName, cols)
+        
+        conn = self.connect()
+        cursor = conn.cursor()
+        try:
+            extras.execute_values(cursor, query, tuples)
+            conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("Error: %s" % error)
+            conn.rollback()
+            cursor.close()
+            return 1
         cursor.close()
 
 

@@ -40,7 +40,7 @@ class App(EWrapper, EClient):
 def main():
     db = DB(userName=userName, userPass=userPass, dataBaseName=dataBaseName, host='localhost', docker=False)
     app = App(db)
-    app.connect("127.0.0.1", 7497, clientId=21) # adjust as needed
+    app.connect("127.0.0.1", 7497, clientId=24) # adjust as needed
 
     app.reqAccountUpdates(True, "") # This will request real-time account updates.
     app.reqPositionsMulti(1, "", "") # This will request real-time position updates for all accounts.

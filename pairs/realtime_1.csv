@@ -1,0 +1,2 @@
+date,ticker_stock1,open_stock1,high_stock1,low_stock1,close_stock1,volume_stock1,count_stock1,wap_stock1,ticker_stock2,open_stock2,high_stock2,low_stock2,close_stock2,volume_stock2,count_stock2,wap_stock2,spread,mean_spread,std_spread,z_score,signal
+2024-06-24 11:25:20,EPAC,38.8,38.8,38.8,38.8,0.0,0.0,38.8,SPXC,144.29,144.29,144.29,144.29,0.0,0.0,144.29,-105.49,-105.48,0.02,-0.32,

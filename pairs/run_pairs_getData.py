@@ -27,9 +27,9 @@ userPass = passwords.userPass
 dataBaseName = passwords.dataBaseName
 host = passwords.host
 
-
-# tickers = ['FRME', 'NWBI','TCMD', 'TPH','CCS', 'LEN','LILA', 'LILAK']
-tickers = pd.read_csv("tickers.csv")['Ticker'].tolist() #normally use this
+tickers = ['SPY']
+#tickers = ['FRME', 'NWBI','TCMD', 'TPH','CCS', 'LEN','LILA', 'LILAK']
+#tickers = pd.read_csv("tickers.csv")['Ticker'].tolist() #normally use this
 #tickers = pd.read_csv("tickers_pairs.csv")['Ticker'].tolist()
 
 class App(EWrapper, EClient):
@@ -83,10 +83,10 @@ def main():
 
             # Create the IBKR App
             #app = App(db, "pairs", ticker)
-            app = App(db, "pairs_hourly", ticker) #Check
+            app = App(db, "pairs_daily", ticker) #Check
 
             # Connect to TWS (or IB Gateway)
-            app.connect("127.0.0.1", 7497, clientId=1)
+            app.connect("127.0.0.1", 7497, clientId=3)
 
             # Create a contract
             contract = create_contract(ticker)
@@ -100,7 +100,7 @@ def main():
 
             # Request historical data for the contract
             end_date_time = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d 23:59:59')
-            app.reqHistoricalData(1, contract, end_date_time, "1 M", "1 day", "TRADES", 0, 1, False, [])
+            app.reqHistoricalData(1, contract, end_date_time, "1 Y", "1 day", "TRADES", 0, 1, False, [])
 
             #app.reqHistoricalData(1, contract, "", "1 M", "1 hour", "TRADES", 0, 1, False, [])
             #app.reqHistoricalData(1, contract, "", "1 Y", "1 day", "TRADES", 0, 1, False, [])
@@ -118,7 +118,7 @@ def main():
                 app.disconnect()
 
         # Pause between each request to not overstep pacing rules
-        time.sleep(10)
+        #time.sleep(10)
 
 if __name__ == "__main__":
     main()
