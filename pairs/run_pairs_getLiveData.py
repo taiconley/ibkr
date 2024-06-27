@@ -80,28 +80,30 @@ def get_realTimeBars(app, contract, reqId):
 
 
 def main():
-    app, api_thread, = app_connect(tableName, 7497, 4)
+    app, api_thread, = app_connect(tableName, 7497, 11)
     # tickers = ['CAC','CCS','CIVB','CNOB','DCOM','FFIC','FISI','FLIC','FRME','FRST',
     #            'IBTX','JOAN','KBH','LBAI','LEN','LILA','LILAK','MDC','MHO','MNTS',
     #            'MTH','MYFW','NWBI','OCFC','PHM','PPBI','RBB','SFST','TCBK','TCMD',
     #            'THFF','TMHC','TMP','TPH','WSBC'
     # ]
-    tickers =   ['EPAC',
-                    'SPXC']
-                    # 'QTWO',
-                    # 'SPXC',
-                    # 'QTWO',
-                    # 'WAB',
-                    # 'SKYW',
-                    # 'TDG',
-                    # 'IR',
-                    # 'LRCX',
-                    # 'SPXC',
-                    # 'WAB',
-                    # 'GFF',
-                    # 'HLT',
-                    # 'CVLT',
-                    # 'TXRH']
+    # tickers =  ['IR', 'LRCX'] 
+    # 
+    tickers =      ['EPAC',
+                    'SPXC'
+                    'QTWO',
+                    'SPXC',
+                    'QTWO',
+                    'WAB',
+                    'SKYW',
+                    'TDG',
+                    'IR',
+                    'LRCX',
+                    'SPXC',
+                    'WAB',
+                    'GFF',
+                    'HLT',
+                    'CVLT',
+                    'TXRH']
 
 
 

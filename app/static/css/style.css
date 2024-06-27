@@ -1,43 +1,83 @@
+/* General page styling */
 body {
     font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
     margin: 0;
     padding: 0;
-    background-color: #f0f0f0;
 }
 
 .container {
     width: 80%;
-    margin: 0 auto;
-    padding-top: 50px;
-    text-align: left; /* Center the title */
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-    color: rgb(108, 105, 105);
+    color: #333;
 }
 
-.table-container {
-    display: flex;
-    flex-direction: column; /* Stack tables vertically */
-    justify-content: flex-start; /* Left align the tables */
-    align-items: flex-start; /* Align items to the start of the container */
+/* Styling for the chart */
+canvas {
+    width: 100%;
+    width: 600px !important;  /* Set a fixed width */
+    height: 300px !important; /* Set a fixed height */
 }
 
-.table {
-    width: 100%; /* Make tables full width */
-    margin: 15px 0; /* Add some vertical space between the tables */
+/* Improved table styling */
+table {
+    width: 100%;
     border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    overflow: hidden;  /* Ensures the border radius applies to the table */
 }
 
-.table td, .table th {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-.table th {
-    padding-top: 12px;
-    padding-bottom: 12px;
+th, td {
     text-align: left;
-    background-color: #a8bcbe; /* Change the color of the header */
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #4CAF50;
     color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ddd;  /* Add hover effect for table rows */
+}
+
+td {
+    font-size: 16px;
+}
+
+
+/* Styling for form elements */
+select {
+    padding: 8px;
+    margin-top: 20px;
+    width: 200px; /* Adjust width as needed */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Button styling (if needed) */
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
 }

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pair Trading Dashboard</title>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Include Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include your custom JavaScript file -->
+    <script src="{{ url_for('static', filename='js/index_app_pairs_new.js') }}" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Pair Trading Dashboard</h1>
+        <label for="pair-selector">Select a Pair:</label>
+        <select id="pair-selector" onchange="updateData()">
+            {% for pair in pairs %}
+            <option value="{{ pair['ticker_stock1'] }},{{ pair['ticker_stock2'] }}">
+                {{ pair['ticker_stock1'] }} / {{ pair['ticker_stock2'] }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <!-- Canvas for the Chart.js chart -->
+        <div>
+            <h2>Z-Score Chart</h2>
+            <canvas id="zScoreChart"></canvas>
+        </div>
+
+        <!-- Optional Table for displaying data -->
+        <div>
+            <!-- Placeholder for the last z_scores table -->
+            <table>
+                <tr>
+                    <th>Pair</th>
+                    <th>Last Z-Score</th>
+                </tr>
+                {% for score in last_z_scores %}
+                <tr>
+                    <td>{{ score['ticker_stock1'] }} / {{ score['ticker_stock2'] }}</td>
+                    <td>{{ score['z_score'] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </body>
+    </html>

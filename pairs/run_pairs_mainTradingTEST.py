@@ -128,10 +128,6 @@ class PairsTradingApp(EWrapper, EClient):
         return order
 
     def trade_pairs_strategy(self, limit, lookback, threshold, trade_percentage, max_multiplier, stop_loss_percentage, take_profit_percentage):
-        total_cash = self.fetch_latest_portfolio_cash()
-        df_real_time_positions = self.fetch_latest_portfolio()
-        df_real_time_positions.to_csv("real_time_positions.csv")
-
         # Wait until nextOrderId is populated
         max_wait_time = 10  # seconds
         wait_time = 0
@@ -143,122 +139,119 @@ class PairsTradingApp(EWrapper, EClient):
             print("Failed to get a valid order ID.")
             return
 
-        def close_all_positions():
-            if stock1_current_qty < 0:
-                self.create_order(stock1, "BUY", abs(stock1_current_qty))
-            elif stock1_current_qty > 0:
-                self.create_order(stock1, "SELL", abs(stock1_current_qty))
-            if stock2_current_qty < 0:
-                self.create_order(stock2, "BUY", abs(stock2_current_qty))
-            elif stock2_current_qty > 0:
-                self.create_order(stock2, "SELL", abs(stock2_current_qty))
+        self.create_order("IR", "BUY", 1)
+    #     total_cash = self.fetch_latest_portfolio_cash()
+    #     df_real_time_positions = self.fetch_latest_portfolio()
+    #     df_real_time_positions.to_csv("real_time_positions.csv")
+
+    #     def close_all_positions():
+    #         if stock1_current_qty < 0:
+    #             self.create_order(stock1, "BUY", stock1_current_qty)
+    #         elif stock1_current_qty > 0:
+    #             self.create_order(stock1, "SELL", stock1_current_qty)
+    #         if stock2_current_qty < 0:
+    #             self.create_order(stock2, "BUY", stock2_current_qty)
+    #         elif stock2_current_qty > 0:
+    #             self.create_order(stock2, "SELL", stock2_current_qty)
             
 
-        for stock1, stock2 in self.pairs:
-            print(stock1, stock2)
-            df_stock1 = self.fetch_latest_data(stock1, limit)
-            #df_stock1.to_csv("stock1.csv")
-            df_stock2 = self.fetch_latest_data(stock2, limit)
-            #df_stock2.to_csv("stock2.csv")           
+        # for stock1, stock2 in self.pairs:
+        #     df_stock1 = self.fetch_latest_data(stock1, limit)
+        #     #df_stock1.to_csv("stock1.csv")
+        #     df_stock2 = self.fetch_latest_data(stock2, limit)
+        #     #df_stock2.to_csv("stock2.csv")           
 
-            # Calculate the spread
-            df = df_stock1.set_index('date').join(df_stock2.set_index('date'), lsuffix='_stock1', rsuffix='_stock2')
-            #df.to_csv("stock1and2.csv")
-            df['spread'] = df['close_stock1'] - df['close_stock2']
+        #     # Calculate the spread
+        #     df = df_stock1.set_index('date').join(df_stock2.set_index('date'), lsuffix='_stock1', rsuffix='_stock2')
+        #     #df.to_csv("stock1and2.csv")
+        #     df['spread'] = df['close_stock1'] - df['close_stock2']
 
-            # Calculate z-score
-            df['mean_spread'] = df['spread'].rolling(window=lookback).mean()
-            df['std_spread'] = df['spread'].rolling(window=lookback).std()
-            df['z_score'] = (df['spread'] - df['mean_spread']) / df['std_spread']     
+        #     # Calculate z-score
+        #     df['mean_spread'] = df['spread'].rolling(window=lookback).mean()
+        #     df['std_spread'] = df['spread'].rolling(window=lookback).std()
+        #     df['z_score'] = (df['spread'] - df['mean_spread']) / df['std_spread']     
 
-            #prep to floats
-            df['volume_stock1'] = df['volume_stock1'].astype(float)
-            df['count_stock1'] = df['count_stock1'].astype(float)
-            df['volume_stock2'] = df['volume_stock2'].astype(float)
-            df['count_stock2'] = df['count_stock2'].astype(float)
+        #     #prep to floats
+        #     df['volume_stock1'] = df['volume_stock1'].astype(float)
+        #     df['count_stock1'] = df['count_stock1'].astype(float)
+        #     df['volume_stock2'] = df['volume_stock2'].astype(float)
+        #     df['count_stock2'] = df['count_stock2'].astype(float)
 
-            # Determine trading signals based on z-score and threshold
-            df['signal'] = "None"
-            df.loc[df['z_score'] > threshold, 'signal'] = f'Buy {stock1}, Sell {stock2}' #maybe i flipped these?
-            df.loc[df['z_score'] < -threshold, 'signal'] = f'Sell {stock1}, Buy {stock2}' #maybe i flipped these?
-            #df = df.round(2)
+        #     # Determine trading signals based on z-score and threshold
+        #     df['signal'] = "None"
+        #     df.loc[df['z_score'] > threshold, 'signal'] = f'Buy {stock1}, Sell {stock2}'
+        #     df.loc[df['z_score'] < -threshold, 'signal'] = f'Sell {stock1}, Buy {stock2}'
+        #     #df = df.round(2)
 
-            # Reset the index to turn the date index into a column
-            df.reset_index(inplace=True)
+        #     # Reset the index to turn the date index into a column
+        #     df.reset_index(inplace=True)
 
-            # Optionally, if the new column doesn't have a descriptive name, rename it
-            df.rename(columns={'index': 'date'}, inplace=True)
-            df.to_csv("real_time_metrics.csv")
-            self.db.DFRowtoDB(df.iloc[-1:], "pairs_live_calculated_metrics")
-            print(df.iloc[-1:])
+        #     # Optionally, if the new column doesn't have a descriptive name, rename it
+        #     df.rename(columns={'index': 'date'}, inplace=True)
+        #     df.to_csv("real_time_metrics.csv")
+        #     self.db.DFRowtoDB(df.iloc[-1:], "pairs_live_calculated_metrics")
+        #     print(df.iloc[-1:])
  
 
-            # Compute the current portfolio value before making any trades
-            #portfolio_value_before_trade = total_cash + self.stock1_qty_cumulative * df_stock1['close'].iloc[-1] + self.stock2_qty_cumulative * df_stock2['close'].iloc[-1]
-            portfolio_value_before_trade = total_cash + df_real_time_positions['updated_marketvalue'].sum()
+        #     # Compute the current portfolio value before making any trades
+        #     #portfolio_value_before_trade = total_cash + self.stock1_qty_cumulative * df_stock1['close'].iloc[-1] + self.stock2_qty_cumulative * df_stock2['close'].iloc[-1]
+        #     portfolio_value_before_trade = total_cash + df_real_time_positions['updated_marketvalue'].sum()
 
 
-            # Adaptive trade size based on z-score
-            base_trade_size = portfolio_value_before_trade * trade_percentage
-            adaptive_trade_size = base_trade_size * min(abs(df['z_score'].iloc[-1]), max_multiplier)
+        #     # Adaptive trade size based on z-score
+        #     base_trade_size = portfolio_value_before_trade * trade_percentage
+        #     adaptive_trade_size = base_trade_size * min(abs(df['z_score'].iloc[-1]), max_multiplier)
 
-            stock1_current_qty = df_real_time_positions[df_real_time_positions['ticker'] == stock1]['position'].sum()
-            stock2_current_qty = df_real_time_positions[df_real_time_positions['ticker'] == stock2]['position'].sum()
-            print(stock1_current_qty)
-            print(stock2_current_qty)
-            # Execute trading signals based on the most recent signal
-            # first if is when to buy stock1 and sell stock2
-            # second if is when to sell stock1 and buy stock1
-            # third if is to exit position because signal is lost
-            signal = df['signal'].iloc[-1]
-            print(signal)
-            if (df['signal'].iloc[-1] == 'Buy ' + stock1 + ', Sell ' + stock2) and (stock1_current_qty == 0) and (stock2_current_qty == 0): 
-                print("if 1")               
-                stock1_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0))
-                stock2_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0))
-                self.create_order(stock1, "BUY", stock1_tobuy_qty)
-                self.create_order(stock2, "SELL", stock2_tobuy_qty)
-            elif (df['signal'].iloc[-1] == 'Sell ' + stock1 + ', Buy ' + stock2) and (stock1_current_qty ==0) and (stock2_current_qty == 0):
-                print("if 2")
-                stock1_tobuy_qty = round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0)
-                stock2_tobuy_qty = round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0)
-                self.create_order(stock1, "SELL", stock1_tobuy_qty)
-                self.create_order(stock2, "BUY", stock2_tobuy_qty)
-            elif df['signal'].iloc[-1] == 'None':
-                print("if 3")
-                if (stock1_current_qty == 0) and (stock2_current_qty == 0):
-                    print(f"no signal and no holdings for {stock1} and {stock2}")
-                elif (stock1_current_qty != 0) and (stock2_current_qty != 0):
-                    close_all_positions()
-                # if stock1_current_qty < 0:
-                #     self.create_order(stock1, "BUY", stock1_current_qty)
-                # elif stock1_current_qty > 0:
-                #     self.create_order(stock1, "SELL", stock1_current_qty)
-                # if stock2_current_qty < 0:
-                #     self.create_order(stock2, "BUY", stock2_current_qty)
-                # elif stock2_current_qty > 0:
-                #     self.create_order(stock2, "SELL", stock2_current_qty)
+        #     stock1_current_qty = df_real_time_positions[df_real_time_positions['ticker'] == stock1]['position'].sum()
+        #     stock2_current_qty = df_real_time_positions[df_real_time_positions['ticker'] == stock2]['position'].sum()
+        #     # Execute trading signals based on the most recent signal
+        #     # first if is when to buy stock1 and sell stock2
+        #     # second if is when to sell stock1 and buy stock1
+        #     # third if is to exit position because signal is lost
+        #     signal = df['signal'].iloc[-1]
+        #     print(signal)
+        #     if signal == 'None':
+        #         if 
+        #     elif (df['signal'].iloc[-1] == 'Buy ' + stock1 + ', Sell ' + stock2) and (stock1_current_qty == 0) and (stock2_current_qty == 0):                
+        #         stock1_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0))
+        #         stock2_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0))
+        #         self.create_order(stock1, "BUY", stock1_tobuy_qty)
+        #         self.create_order(stock2, "SELL", stock2_tobuy_qty)
+        #     elif (df['signal'].iloc[-1] == 'Sell ' + stock1 + ', Buy ' + stock2) and (stock1_current_qty ==0) and (stock2_current_qty == 0):
+        #         stock1_tobuy_qty = round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0)
+        #         stock2_tobuy_qty = round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0)
+        #         self.create_order(stock1, "SELL", stock1_tobuy_qty)
+        #         self.create_order(stock2, "BUY", stock2_tobuy_qty)
+        #     elif df['signal'].iloc[-1] == 'None':
+        #         if (stock1_current_qty == 0) and (stock2_current_qty == 0):
+        #             break
+        #         elif (stock1_current_qty != 0) and (stock2_current_qty != 0):
+        #             close_all_positions()
+        #         # if stock1_current_qty < 0:
+        #         #     self.create_order(stock1, "BUY", stock1_current_qty)
+        #         # elif stock1_current_qty > 0:
+        #         #     self.create_order(stock1, "SELL", stock1_current_qty)
+        #         # if stock2_current_qty < 0:
+        #         #     self.create_order(stock2, "BUY", stock2_current_qty)
+        #         # elif stock2_current_qty > 0:
+        #         #     self.create_order(stock2, "SELL", stock2_current_qty)
                 
 
 
-            # Stop-loss and Take-profit logic
+        #     # Stop-loss and Take-profit logic
 
-            try:
-                stock1_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock1]['pnl_percent'].iloc[0]
-            except IndexError:  # Catches the error if the DataFrame is empty or the index does not exist
-                stock1_pnl = 0
-            try:
-                stock2_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock2]['pnl_percent'].iloc[0]
-            except IndexError:  # Catches the error if the DataFrame is empty or the index does not exist
-                stock2_pnl = 0
+        #     # check pnl %. If <= stop_loss_percentage, then exit position. 
+        #     # if >= take_profit_percentage, then exit position
+        #     # need to think about what pnl means in a pair.  do i consider each position seperately, or combined
 
-            if (stock1_pnl < (-stop_loss_percentage)) or (stock2_pnl < (-stop_loss_percentage)):
-                print("if 4")
-                close_all_positions()
+        #     stock1_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock1]['pnl_percent'][0]
+        #     stock2_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock2]['pnl_percent'][0]
 
-            if (stock1_pnl > take_profit_percentage) or (stock2_pnl > take_profit_percentage):
-                print("if 5")
-                close_all_positions()
+        #     if (stock1_pnl < (-stop_loss_percentage)) or (stock2_pnl < (-stop_loss_percentage)):
+        #         close_all_positions()
+
+        #     if (stock1_pnl > take_profit_percentage) or (stock2_pnl > take_profit_percentage):
+        #         close_all_positions()
 
 
 
@@ -297,33 +290,24 @@ def app_connect(tableName, tws_connect_num, connect_thread, pairs, max_retries=5
     
 
 if __name__ == "__main__":
-    limit = 60 # limit is the set of datapoints collected from the database.  example 30 means the last 30 data points.  This should be same or larger than lookback
+    limit = 600 # limit is the set of datapoints collected from the database.  example 30 means the last 30 data points.  This should be same or larger than lookback
     lookback = 30 # lookback is the number of datapoints used when calculating metrics, after it is collected from database with limit
-    threshold = 2.5
+    threshold = 0.5
     trade_percentage = 0.1
     max_multiplier = 2.0
     stop_loss_percentage = 0.03
     take_profit_percentage = 0.04
     # Define pairs to paper trade
     #pairs = [('EPAC', 'SPXC'), ('QTWO', 'WAB')]  # Add or modify as needed
-    # pairs = [('IR', 'LRCX'), ('QTWO', 'WAB')]
-    pairs = [('EPAC', 'SPXC'), 
-            ('QTWO', 'SPXC'), 
-            ('QTWO', 'WAB'), 
-            ('SKYW', 'TDG'), 
-            ('IR', 'LRCX'), 
-            ('SPXC', 'WAB'), 
-            ('GFF', 'HLT'), 
-            ('CVLT', 'TXRH')
-                            ]
+    pairs = [('IR', 'LRCX')]
 
     # Connect the application
-    app, api_thread = app_connect(tableName, 7497, 2, pairs)  # Add or modify pairs as needed
+    app, api_thread = app_connect(tableName, 7497, 10, pairs)  # Add or modify pairs as needed
 
 
     while app.isConnected():
         app.trade_pairs_strategy(limit, lookback, threshold, trade_percentage, max_multiplier, stop_loss_percentage, take_profit_percentage)
-        time.sleep(5)
+        time.sleep(3)
 
 
-    app.disconnect()
+        app.disconnect()
