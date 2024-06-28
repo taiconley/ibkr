@@ -7,7 +7,7 @@ body {
 }
 
 .container {
-    width: 80%;
+    width: 40%;
     margin: 20px auto;
     background-color: #fff;
     padding: 20px;
@@ -20,9 +20,9 @@ h1 {
 
 /* Styling for the chart */
 canvas {
-    width: 100%;
-    width: 600px !important;  /* Set a fixed width */
-    height: 300px !important; /* Set a fixed height */
+    /* width: 80%; */
+    width: 100px !important;  /* Set a fixed width */
+    height: 100px !important; /* Set a fixed height */
 }
 
 /* Improved table styling */

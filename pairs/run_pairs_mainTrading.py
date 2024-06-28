@@ -211,54 +211,54 @@ class PairsTradingApp(EWrapper, EClient):
             # second if is when to sell stock1 and buy stock1
             # third if is to exit position because signal is lost
             signal = df['signal'].iloc[-1]
-            print(signal)
-            if (df['signal'].iloc[-1] == 'Buy ' + stock1 + ', Sell ' + stock2) and (stock1_current_qty == 0) and (stock2_current_qty == 0): 
-                print("if 1")               
-                stock1_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0))
-                stock2_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0))
-                self.create_order(stock1, "BUY", stock1_tobuy_qty)
-                self.create_order(stock2, "SELL", stock2_tobuy_qty)
-            elif (df['signal'].iloc[-1] == 'Sell ' + stock1 + ', Buy ' + stock2) and (stock1_current_qty ==0) and (stock2_current_qty == 0):
-                print("if 2")
-                stock1_tobuy_qty = round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0)
-                stock2_tobuy_qty = round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0)
-                self.create_order(stock1, "SELL", stock1_tobuy_qty)
-                self.create_order(stock2, "BUY", stock2_tobuy_qty)
-            elif df['signal'].iloc[-1] == 'None':
-                print("if 3")
-                if (stock1_current_qty == 0) and (stock2_current_qty == 0):
-                    print(f"no signal and no holdings for {stock1} and {stock2}")
-                elif (stock1_current_qty != 0) and (stock2_current_qty != 0):
-                    close_all_positions()
-                # if stock1_current_qty < 0:
-                #     self.create_order(stock1, "BUY", stock1_current_qty)
-                # elif stock1_current_qty > 0:
-                #     self.create_order(stock1, "SELL", stock1_current_qty)
-                # if stock2_current_qty < 0:
-                #     self.create_order(stock2, "BUY", stock2_current_qty)
-                # elif stock2_current_qty > 0:
-                #     self.create_order(stock2, "SELL", stock2_current_qty)
+            # print(signal)
+            # if (df['signal'].iloc[-1] == 'Buy ' + stock1 + ', Sell ' + stock2) and (stock1_current_qty == 0) and (stock2_current_qty == 0): 
+            #     print("if 1")               
+            #     stock1_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0))
+            #     stock2_tobuy_qty = int(round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0))
+            #     self.create_order(stock1, "BUY", stock1_tobuy_qty)
+            #     self.create_order(stock2, "SELL", stock2_tobuy_qty)
+            # elif (df['signal'].iloc[-1] == 'Sell ' + stock1 + ', Buy ' + stock2) and (stock1_current_qty ==0) and (stock2_current_qty == 0):
+            #     print("if 2")
+            #     stock1_tobuy_qty = round(adaptive_trade_size / 2 / df_stock1['close'].iloc[-1], 0)
+            #     stock2_tobuy_qty = round(adaptive_trade_size / 2 / df_stock2['close'].iloc[-1], 0)
+            #     self.create_order(stock1, "SELL", stock1_tobuy_qty)
+            #     self.create_order(stock2, "BUY", stock2_tobuy_qty)
+            # elif df['signal'].iloc[-1] == 'None':
+            #     print("if 3")
+            #     if (stock1_current_qty == 0) and (stock2_current_qty == 0):
+            #         print(f"no signal and no holdings for {stock1} and {stock2}")
+            #     elif (stock1_current_qty != 0) and (stock2_current_qty != 0):
+            #         close_all_positions()
+            #     # if stock1_current_qty < 0:
+            #     #     self.create_order(stock1, "BUY", stock1_current_qty)
+            #     # elif stock1_current_qty > 0:
+            #     #     self.create_order(stock1, "SELL", stock1_current_qty)
+            #     # if stock2_current_qty < 0:
+            #     #     self.create_order(stock2, "BUY", stock2_current_qty)
+            #     # elif stock2_current_qty > 0:
+            #     #     self.create_order(stock2, "SELL", stock2_current_qty)
                 
 
 
-            # Stop-loss and Take-profit logic
+            # # Stop-loss and Take-profit logic
 
-            try:
-                stock1_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock1]['pnl_percent'].iloc[0]
-            except IndexError:  # Catches the error if the DataFrame is empty or the index does not exist
-                stock1_pnl = 0
-            try:
-                stock2_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock2]['pnl_percent'].iloc[0]
-            except IndexError:  # Catches the error if the DataFrame is empty or the index does not exist
-                stock2_pnl = 0
+            # try:
+            #     stock1_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock1]['pnl_percent'].iloc[0]
+            # except IndexError:  # Catches the error if the DataFrame is empty or the index does not exist
+            #     stock1_pnl = 0
+            # try:
+            #     stock2_pnl = df_real_time_positions[df_real_time_positions['ticker'] == stock2]['pnl_percent'].iloc[0]
+            # except IndexError:  # Catches the error if the DataFrame is empty or the index does not exist
+            #     stock2_pnl = 0
 
-            if (stock1_pnl < (-stop_loss_percentage)) or (stock2_pnl < (-stop_loss_percentage)):
-                print("if 4")
-                close_all_positions()
+            # if (stock1_pnl < (-stop_loss_percentage)) or (stock2_pnl < (-stop_loss_percentage)):
+            #     print("if 4")
+            #     close_all_positions()
 
-            if (stock1_pnl > take_profit_percentage) or (stock2_pnl > take_profit_percentage):
-                print("if 5")
-                close_all_positions()
+            # if (stock1_pnl > take_profit_percentage) or (stock2_pnl > take_profit_percentage):
+            #     print("if 5")
+            #     close_all_positions()
 
 
 

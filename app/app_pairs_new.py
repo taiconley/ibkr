@@ -53,12 +53,22 @@ def get_last_z_scores():
     df = db.DBtoDF(query)
     return df.to_dict(orient='records')
 
+def get_prices(ticker1, ticker2, limit):
+    query = f"""
+        SELECT date, close_stock1, close_stock2 FROM pairs_live_calculated_metrics
+        WHERE ticker_stock1 = '{ticker1}' AND ticker_stock2 = '{ticker2}'
+        ORDER BY date DESC LIMIT {limit}
+    """
+    df = db.DBtoDF(query)
+    return df.sort_values('date').to_dict(orient='records')
+
 @app.route('/update_chart')
 def update_chart():
     selected_pair = request.args.get('pair')
     ticker1, ticker2 = selected_pair.split(',')
     z_scores = get_z_scores(ticker1, ticker2, 30)  # Function to fetch the last 30 z_score entries
-    return jsonify(z_scores)
+    prices = get_prices(ticker1, ticker2, 30)  # Function to fetch the last 30 prices for both stocks
+    return jsonify({'chartData': z_scores, 'prices': prices})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8001)
